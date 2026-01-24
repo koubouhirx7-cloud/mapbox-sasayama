@@ -51,19 +51,27 @@ export const useNavigation = (routeSteps: any[]) => {
         let nearestStepIndex = -1;
         let minDistance = Infinity;
 
-        // Strategy: Only look ahead from the last announced step to avoid backtracking
-        // But allow some buffer in case we missed one
-        const searchStartIndex = Math.max(0, lastAnnouncedStepIndex.current);
+        // Strategy to fix Loop Course Bug:
+        // Only search for the next few steps relative to the last one we passed.
+        // This prevents the "destination" (Step N) from being picked when we are at the "start" (Step 0),
+        // even though they are at the same location.
 
-        for (let i = searchStartIndex; i < routeSteps.length; i++) {
+        // Start from the last announced step (or 0)
+        let searchStartIndex = Math.max(0, lastAnnouncedStepIndex.current);
+
+        // If we are just starting (index 0 or -1), and it's a loop, 
+        // the last step is also a candidate if we search the whole array.
+        // So effectively restrict the search window.
+        // A window of 10 steps should be enough for any reasonable detour or long segment.
+        let searchEndIndex = Math.min(routeSteps.length, searchStartIndex + 10);
+
+        for (let i = searchStartIndex; i < searchEndIndex; i++) {
             const stepLoc = new mapboxgl.LngLat(
                 routeSteps[i].maneuver.location[0],
                 routeSteps[i].maneuver.location[1]
             );
             const dist = userLoc.distanceTo(stepLoc);
 
-            // If we are very far from this step, it's likely not the next one (unless it's a long straight)
-            // This is a naive heuristic. Real navigation SDKs use complex map matching.
             if (dist < minDistance) {
                 minDistance = dist;
                 nearestStepIndex = i;
