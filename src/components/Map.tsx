@@ -8,6 +8,7 @@ const Map: React.FC = () => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const [error, setError] = React.useState<string | null>(null);
+    const [mapInstance, setMapInstance] = React.useState<mapboxgl.Map | null>(null);
 
     useEffect(() => {
         const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -34,6 +35,7 @@ const Map: React.FC = () => {
                     center: HIGHLANDER_COORDS,
                     zoom: 15,
                 });
+                setMapInstance(mapRef.current);
 
                 // Add navigation controls (zoom, rotate)
                 mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -136,11 +138,14 @@ const Map: React.FC = () => {
     }
 
     return (
-        <div
-            ref={mapContainerRef}
-            className="w-full h-full min-h-[400px]"
-            style={{ position: 'absolute', top: 0, bottom: 0, width: '100%' }}
-        />
+        <div className="w-full h-full relative">
+            <div
+                ref={mapContainerRef}
+                className="w-full h-full min-h-[400px]"
+                style={{ position: 'absolute', top: 0, bottom: 0, width: '100%' }}
+            />
+            {mapInstance && <GpxRouteLayer map={mapInstance} />}
+        </div>
     );
 };
 
