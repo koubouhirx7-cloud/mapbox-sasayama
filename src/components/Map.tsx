@@ -287,19 +287,26 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
             try {
                 if (!targetRoute.data) return;
 
+                // Find the proper LineString feature for the route path
+                const routeFeature = targetRoute.data.features.find((f: any) => f.geometry.type === 'LineString');
+                if (!routeFeature) return;
+
                 // Sample coordinates from route data to force the route match
                 // This ensures the API returns instructions for THIS specific path
-                const rawCoords = targetRoute.data.features[0].geometry.coordinates;
+                const rawCoords = routeFeature.geometry.coordinates;
                 const waypoints: [number, number][] = [];
 
+                // Helper to ensure 2D coordinates [lng, lat]
+                const toLngLat = (coord: any[]) => [coord[0], coord[1]] as [number, number];
+
                 // Add Start
-                waypoints.push(rawCoords[0] as [number, number]);
+                waypoints.push(toLngLat(rawCoords[0]));
 
                 // Add intermediates (every 20th point to stay under URL limit but define shape)
                 // The Mapbox Directions API supports up to 25 coordinates
                 const step = Math.ceil(rawCoords.length / 23);
                 for (let i = step; i < rawCoords.length - 1; i += step) {
-                    waypoints.push(rawCoords[i] as [number, number]);
+                    waypoints.push(toLngLat(rawCoords[i]));
                 }
 
                 // Add End
