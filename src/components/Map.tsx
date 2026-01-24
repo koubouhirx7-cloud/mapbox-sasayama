@@ -231,19 +231,36 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                             // Extract steps from all legs
                             // Filter out intermediate "Arrive" steps (waypoints) to prevent falsely announcing destination at every sample point
                             const rawSteps = route.legs.flatMap((leg: any) => leg.steps);
-                            const allSteps = rawSteps.filter((step: any) => {
-                                // Aggressive filtering for "Destination" announcements
-                                const isArriveType = step.maneuver.type === 'arrive';
-                                const hasDestinationText = step.maneuver.instruction.includes('目的地') ||
-                                    step.maneuver.instruction.toLowerCase().includes('arrive') ||
-                                    step.maneuver.instruction.toLowerCase().includes('destination');
-
-                                if (isArriveType || hasDestinationText) {
-                                    console.log('Filtered out step:', step.maneuver.instruction);
-                                    return false;
-                                }
-                                return true;
+                            // 1. Filter out specific "Arrive" steps
+                            const filteredSteps = rawSteps.filter((step: any) => {
+                                return step.maneuver.type !== 'arrive';
                             });
+
+                            // 2. Sanitize text in remaining steps to remove "destination" mentions
+                            // (e.g. "Right turn, then you will arrive at destination")
+                            const allSteps = filteredSteps.map((step: any) => {
+                                const cleanText = (text: string) => {
+                                    if (!text) return text;
+                                    // Remove phrases like "then you will arrive at your destination" or "目的地に到着します"
+                                    return text
+                                        .replace(/(and )?you will arrive at your destination/gi, '')
+                                        .replace(/, then you will arrive/gi, '')
+                                        .replace(/目的地に到着(します|です)?/g, '')
+                                        .replace(/目的地/g, ''); // Fallback
+                                };
+
+                                const newStep = { ...step };
+                                newStep.maneuver = { ...step.maneuver, instruction: cleanText(newStep.maneuver.instruction) };
+
+                                if (newStep.voiceInstructions) {
+                                    newStep.voiceInstructions = newStep.voiceInstructions.map((v: any) => ({
+                                        ...v,
+                                        announcement: cleanText(v.announcement)
+                                    }));
+                                }
+                                return newStep;
+                            });
+
                             onStepsChange(allSteps);
                         }
                         // removed onRouteLoaded call to keep simulation on the GPX trace
