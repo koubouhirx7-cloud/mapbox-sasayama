@@ -9,21 +9,21 @@ interface RouteSelectorProps {
 
 const RouteSelector: React.FC<RouteSelectorProps> = ({ activeRoute, onRouteSelect }) => {
     return (
-        <div className="absolute top-20 right-4 z-40 bg-white/90 backdrop-blur-md p-1.5 rounded-xl shadow-xl border border-satoyama-forest/20 flex gap-1">
+        <div className="flex bg-white/10 p-1 rounded-lg border border-white/20">
             <button
                 onClick={() => onRouteSelect('recommended')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${activeRoute === 'recommended'
-                        ? 'bg-satoyama-forest text-white shadow-md scale-105'
-                        : 'text-satoyama-forest hover:bg-satoyama-mist/40'
+                className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${activeRoute === 'recommended'
+                    ? 'bg-satoyama-mist text-satoyama-forest shadow-sm'
+                    : 'text-satoyama-mist hover:bg-white/10'
                     }`}
             >
                 🚲 おすすめ
             </button>
             <button
                 onClick={() => onRouteSelect('gpx')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${activeRoute === 'gpx'
-                        ? 'bg-satoyama-forest text-white shadow-md scale-105'
-                        : 'text-satoyama-forest hover:bg-satoyama-mist/40'
+                className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${activeRoute === 'gpx'
+                    ? 'bg-satoyama-mist text-satoyama-forest shadow-sm'
+                    : 'text-satoyama-mist hover:bg-white/10'
                     }`}
             >
                 🗺️ GPXルート
