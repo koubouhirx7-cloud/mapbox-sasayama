@@ -417,6 +417,8 @@ const Map: React.FC<MapProps> = ({
         setIs3D(!is3D);
     };
 
+    const simulationMarkerRef = useRef<mapboxgl.Marker | null>(null);
+
     // Navigation View Lock (North Up + 45deg Tilt)
     // Triggered when speed is detected
     useEffect(() => {
