@@ -5,6 +5,7 @@ import CourseInfoPanel from './components/CourseInfoPanel'
 import { explorationRoutes } from './data/explorationRoutes'
 import { useNavigation } from './hooks/useNavigation'
 import { useSimulation } from './hooks/useSimulation'
+import WelcomeGuide from './components/WelcomeGuide'
 
 type RouteType = 'sasayama-main' | string;
 
@@ -26,6 +27,7 @@ function App() {
     const [activeRoute, setActiveRoute] = useState<RouteType>('sasayama-main')
     const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null)
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [showWelcome, setShowWelcome] = useState(true);
 
     // Navigation State
     const [routeSteps, setRouteSteps] = useState<any[]>([]);
@@ -230,6 +232,18 @@ function App() {
                     onRouteLoaded={(route) => setRouteGeometry(route)}
                     onProximityChange={() => { }}
                 />
+
+                {showWelcome && (
+                    <WelcomeGuide
+                        userLocation={userLocation}
+                        routes={explorationRoutes}
+                        onSelectRoute={(id) => {
+                            setActiveRoute(id);
+                            setShowWelcome(false);
+                        }}
+                        onClose={() => setShowWelcome(false)}
+                    />
+                )}
             </main>
         </div>
     )
