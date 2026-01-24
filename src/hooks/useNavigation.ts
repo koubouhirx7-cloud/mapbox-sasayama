@@ -82,23 +82,26 @@ export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true)
             const step = routeSteps[nearestStepIndex];
             const nextStep = routeSteps[nearestStepIndex + 1] || null;
 
-            // Voice Announcement Logic
+            // Voice/Sound Announcement Logic
             // Timing depends on speed
             const isHighSpeed = speedRef.current > 15;
             const threshold = isHighSpeed ? 200 : 80; // meters (Increased from 150/50 for better matching tolerance)
 
+            const shouldAnnounce = minDistance < threshold;
+
             // Debug Log
             // console.log(`Nav: nearest=${nearestStepIndex}, dist=${Math.round(minDistance)}m, threshold=${threshold}m, last=${lastAnnouncedStepIndex.current}`);
 
-            // If we haven't confirmed passing this step yet
-            if (lastAnnouncedStepIndex.current < nearestStepIndex) {
-                if (minDistance < threshold) {
-                    // Announce!
-                    const instruction = step.voiceInstructions?.[0]?.announcement || step.maneuver.instruction;
-                    console.log(`Speaking Step ${nearestStepIndex}: ${instruction}`);
-                    if (isVoiceEnabled) speak(instruction);
-                    lastAnnouncedStepIndex.current = nearestStepIndex;
-                }
+            // Trigger sound if enabled and new step
+            if (isVoiceEnabled && shouldAnnounce && nearestStepIndex !== lastAnnouncedStepIndex.current) {
+                // Play notification sound
+                playChime();
+
+                // Update state
+                lastAnnouncedStepIndex.current = nearestStepIndex;
+                // The instruction implies setting currentStep here, but the original code
+                // updates the state object at the end of the function.
+                // We'll keep the state update consolidated.
             }
 
             setState(prev => ({
