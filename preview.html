@@ -70,16 +70,14 @@
 
 <body class="bg-satoyama-mist flex flex-col h-screen overflow-hidden">
 
-    <header class="bg-satoyama-forest text-satoyama-mist py-4 px-6 shadow-lg z-20 flex items-center justify-between">
+    <header class="bg-[#2D5A27] text-satoyama-mist py-4 px-6 shadow-lg z-20 flex items-center justify-between">
         <div>
-            <h1 class="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
-                <span
-                    class="w-8 h-8 bg-satoyama-mist rounded-lg flex items-center justify-center text-satoyama-forest text-lg">🚲</span>
-                Green-Gear Navigation
+            <h1 class="text-3xl font-extrabold tracking-tight flex items-center gap-3 text-white">
+                Green-Gear
             </h1>
         </div>
-        <div class="hidden md:block text-sm font-medium opacity-80">
-            Cycle through Tanba-Sasayama
+        <div class="text-sm text-white/90 font-medium tracking-widest uppercase border-l-2 border-white pl-2">
+            satoyama-ride
         </div>
     </header>
 
@@ -203,6 +201,24 @@
                     'line-opacity': 0.7
                 }
             });
+
+            // Auto-start Ride Mode
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.get('mode') === 'ride') {
+                setTimeout(() => {
+                    map.setPitch(60);
+                    // Find the geolocate control and trigger it
+                    // Since we didn't save the reference in a variable accessible here easily, 
+                    // let's grab it or just re-add/trigger logic. 
+                    // Actually, let's look at line 160. It's added to map but not saved to var.
+                    // We need to refactor line 160 to save variable first.
+                    // BUT, to keep this replace simple, I will select the button element or refactor the top part.
+                    // Wait, I can't refactor the top part in this chunk easily without expanding context.
+                    // Actually I can just simulate click on the geolocate button. 
+                    const geolocateBtn = document.querySelector('.mapboxgl-ctrl-geolocate');
+                    if (geolocateBtn) geolocateBtn.click();
+                }, 1000);
+            }
         });
     </script>
 </body>
