@@ -3,6 +3,7 @@ import Map from './components/Map'
 import NavigationBanner from './components/NavigationPopup' // Still using the same file but renamed component inside
 import { explorationRoutes } from './data/explorationRoutes'
 import { useNavigation } from './hooks/useNavigation'
+import { useSimulation } from './hooks/useSimulation'
 
 type RouteType = 'sasayama-main' | string;
 
@@ -26,6 +27,17 @@ function App() {
 
     // Navigation State
     const [routeSteps, setRouteSteps] = useState<any[]>([]);
+    const [routeGeometry, setRouteGeometry] = useState<any>(null); // New: Store geometry for simulation
+
+    // Simulation Hook
+    const {
+        isPlaying: isSimulating,
+        toggleSimulation,
+        simulatedLocation,
+        setSpeed,
+        speed: simSpeed
+    } = useSimulation(routeGeometry);
+
     const {
         currentStep,
         distanceToNext,
@@ -40,6 +52,13 @@ function App() {
             startNavigation();
         }
     }, [routeSteps]);
+
+    // Feed simulated location to navigation logic
+    useEffect(() => {
+        if (isSimulating && simulatedLocation) {
+            updateLocation(simulatedLocation.lat, simulatedLocation.lng);
+        }
+    }, [isSimulating, simulatedLocation]);
 
     // Sort routes by proximity to user
     const sortedRoutes = useMemo(() => {
@@ -103,6 +122,32 @@ function App() {
                     </div>
                 </div>
 
+                {/* Simulation Control Panel */}
+                <div className="p-4 bg-white/5 border-t border-white/10">
+                    <h3 className="text-[10px] uppercase font-bold text-satoyama-leaf mb-2">Simulation</h3>
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between text-xs">
+                            <span>Speed: {simSpeed} km/h</span>
+                            <input
+                                type="range"
+                                min="5" max="60" step="5"
+                                value={simSpeed}
+                                onChange={(e) => setSpeed(parseInt(e.target.value))}
+                                className="w-24 accent-satoyama-leaf"
+                            />
+                        </div>
+                        <button
+                            onClick={toggleSimulation}
+                            className={`w-full py-2 rounded text-xs font-bold transition-colors ${isSimulating
+                                    ? 'bg-red-500/20 text-red-200 border border-red-500/50 hover:bg-red-500/30'
+                                    : 'bg-satoyama-leaf/20 text-satoyama-leaf border border-satoyama-leaf/30 hover:bg-satoyama-leaf/30'
+                                }`}
+                        >
+                            {isSimulating ? '⏹ Stop Simulation' : '▶️ Start Simulation'}
+                        </button>
+                    </div>
+                </div>
+
                 <div className="p-4 border-t border-white/10 text-[10px] text-center text-satoyama-leaf opacity-60">
                     &copy; 2026 Green-Gear Project
                 </div>
@@ -114,18 +159,28 @@ function App() {
                     <NavigationBanner
                         step={currentStep}
                         distance={distanceToNext}
-                        speed={currentSpeed}
+                        speed={isSimulating ? simSpeed : currentSpeed}
                     />
                 )}
 
                 <Map
                     activeRoute={activeRoute}
+                    simulatedLocation={simulatedLocation}
                     onUserLocationChange={(lat, lng) => {
-                        setUserLocation({ lat, lng });
-                        updateLocation(lat, lng);
+                        // Only update real location if not simulating
+                        if (!isSimulating) {
+                            setUserLocation({ lat, lng });
+                            updateLocation(lat, lng);
+                        }
                     }}
-                    onStepsChange={setRouteSteps}
-                    // Deprecated proximity logic removed in favor of useNavigation hook
+                    onStepsChange={(steps) => {
+                        setRouteSteps(steps);
+                        // Hacky way to get geometry: Map component should probably expose it better
+                        // But for now, we rely on the fact that Map fetches it.
+                        // Ideally we pass a callback for full route data.
+                    }}
+                    // Enhanced prop to capture geometry
+                    onRouteLoaded={(route) => setRouteGeometry(route)}
                     onProximityChange={() => { }}
                 />
             </main>

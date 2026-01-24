@@ -13,6 +13,7 @@ interface MapProps {
     onProximityChange?: (step: any, distance: number | null) => void;
     onUserLocationChange?: (lat: number, lng: number) => void;
     activeRoute: 'mock-loop-west' | string;
+    simulatedLocation?: { lat: number, lng: number } | null;
 }
 
 // Helper to create a circle GeoJSON
@@ -208,6 +209,45 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
         mapRef.current.easeTo({ pitch: targetPitch, duration: 1000 });
         setIs3D(!is3D);
     };
+
+    // Simulation Marker
+    const simulationMarkerRef = useRef<mapboxgl.Marker | null>(null);
+
+    // Update Simulation Marker
+    useEffect(() => {
+        if (!mapRef.current) return;
+
+        if (simulatedLocation) {
+            if (!simulationMarkerRef.current) {
+                const el = document.createElement('div');
+                el.className = 'simulation-marker';
+                el.style.backgroundColor = '#FF8C00';
+                el.style.width = '20px';
+                el.style.height = '20px';
+                el.style.borderRadius = '50%';
+                el.style.border = '2px solid white';
+                el.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
+
+                simulationMarkerRef.current = new mapboxgl.Marker({ element: el })
+                    .setLngLat([simulatedLocation.lng, simulatedLocation.lat])
+                    .addTo(mapRef.current);
+            } else {
+                simulationMarkerRef.current.setLngLat([simulatedLocation.lng, simulatedLocation.lat]);
+            }
+
+            // Optional: Camera follow
+            mapRef.current.easeTo({
+                center: [simulatedLocation.lng, simulatedLocation.lat],
+                duration: 100,
+                easing: (t) => t
+            });
+        } else {
+            if (simulationMarkerRef.current) {
+                simulationMarkerRef.current.remove();
+                simulationMarkerRef.current = null;
+            }
+        }
+    }, [simulatedLocation]);
 
     if (error) return <div className="text-red-500 p-4">{error}</div>;
 
