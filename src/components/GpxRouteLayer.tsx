@@ -128,7 +128,7 @@ const GpxRouteLayer: React.FC<GpxRouteLayerProps> = ({ map, isVisible }) => {
             });
             if (map.getSource('gpx-route')) map.removeSource('gpx-route');
         };
-    }, [map]);
+    }, [map, isVisible]);
 
     return null;
 };

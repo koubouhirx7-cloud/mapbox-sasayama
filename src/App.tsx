@@ -7,7 +7,7 @@ type RouteType = 'recommended' | 'gpx';
 
 function App() {
     const [steps, setSteps] = useState<any[]>([])
-    const [activeRoute, setActiveRoute] = useState<RouteType>('recommended')
+    const [activeRoute, setActiveRoute] = useState<RouteType>('gpx')
 
     return (
         <div className="flex flex-col w-screen h-screen bg-satoyama-mist font-sans">
