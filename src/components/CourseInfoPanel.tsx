@@ -9,10 +9,11 @@ interface CourseInfoPanelProps {
     onSpeedChange: (speed: number) => void;
     isVoiceEnabled: boolean;
     onVoiceChange: (enabled: boolean) => void;
+    onTestVoice: () => void;
     className?: string;
 }
 
-const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulation, isSimulating, speed, onSpeedChange, isVoiceEnabled, onVoiceChange, className = '' }) => {
+const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulation, isSimulating, speed, onSpeedChange, isVoiceEnabled, onVoiceChange, onTestVoice, className = '' }) => {
     return (
         <div className={`bg-white/90 backdrop-blur-md p-5 rounded-xl shadow-2xl border border-satoyama-forest/10 max-w-sm md:max-w-md ${className}`}>
             <div className="flex items-start justify-between gap-4 mb-3">

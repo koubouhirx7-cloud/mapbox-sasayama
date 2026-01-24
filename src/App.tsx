@@ -205,6 +205,7 @@ function App() {
                         onSpeedChange={setSpeed}
                         isVoiceEnabled={isVoiceEnabled}
                         onVoiceChange={setIsVoiceEnabled}
+                        onTestVoice={handleTestVoice}
                         className="absolute bottom-6 left-4 right-4 md:bottom-8 md:left-8 md:right-auto z-30"
                     />
                 )}
