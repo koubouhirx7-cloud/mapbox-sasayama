@@ -249,15 +249,36 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
 
     // Handle Route Changes & Fetch Directions
     useEffect(() => {
-        if (!mapRef.current || !targetRoute) return;
-        const map = mapRef.current;
+        if (!mapInstance || !targetRoute) return;
+        const map = mapInstance;
 
-        // Fly to start point
-        map.flyTo({
-            center: targetRoute.startPoint,
-            zoom: 14,
-            duration: 2000
-        });
+        // Fit bounds to show the entire route
+        if (targetRoute.data && targetRoute.category === 'route') {
+            const bounds = new mapboxgl.LngLatBounds();
+            targetRoute.data.features.forEach((feature: any) => {
+                if (feature.geometry.type === 'LineString') {
+                    feature.geometry.coordinates.forEach((coord: [number, number]) => {
+                        bounds.extend(coord);
+                    });
+                }
+            });
+
+            if (!bounds.isEmpty()) {
+                map.fitBounds(bounds, {
+                    padding: { top: 50, bottom: 200, left: 50, right: 50 },
+                    duration: 2000
+                });
+            } else {
+                map.flyTo({ center: targetRoute.startPoint, zoom: 14, duration: 2000 });
+            }
+        } else {
+            // Fallback for areas or missing data
+            map.flyTo({
+                center: targetRoute.startPoint,
+                zoom: targetRoute.category === 'area' ? 15 : 14,
+                duration: 2000
+            });
+        }
 
         // Fetch Turn-by-Turn Directions
         const loadRoute = async () => {
@@ -357,7 +378,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
         };
 
         loadRoute();
-    }, [activeRoute, targetRoute]);
+    }, [activeRoute, targetRoute, mapInstance]);
 
     const toggle3D = () => {
         if (!mapRef.current) return;
