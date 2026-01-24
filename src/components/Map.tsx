@@ -231,9 +231,9 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                             // Extract steps from all legs
                             // Filter out intermediate "Arrive" steps (waypoints) to prevent falsely announcing destination at every sample point
                             const rawSteps = route.legs.flatMap((leg: any) => leg.steps);
-                            const allSteps = rawSteps.filter((step: any, index: number) => {
-                                // Keep the step if it's NOT an arrival, OR if it's the very last step
-                                return step.maneuver.type !== 'arrive' || index === rawSteps.length - 1;
+                            const allSteps = rawSteps.filter((step: any) => {
+                                // Filter out ALL 'arrive' steps as per user request ("目的地はなしで")
+                                return step.maneuver.type !== 'arrive';
                             });
                             onStepsChange(allSteps);
                         }
