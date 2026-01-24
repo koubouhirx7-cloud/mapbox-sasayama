@@ -1,10 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { locationData, routeData } from '../data/locations';
+import { locationData } from '../data/locations';
+import { fetchDirections } from '../services/DirectionsService';
+import GpxRouteLayer from './GpxRouteLayer';
+import courseData from '../data/course.geojson';
 
 const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
 
-const Map: React.FC = () => {
+interface MapProps {
+    onStepsChange?: (steps: any[]) => void;
+}
+
+const Map: React.FC<MapProps> = ({ onStepsChange }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const [error, setError] = React.useState<string | null>(null);
@@ -82,28 +89,57 @@ const Map: React.FC = () => {
                 });
 
                 // Add Route Line
-                mapRef.current.on('load', () => {
+                mapRef.current.on('load', async () => {
                     if (!mapRef.current) return;
 
-                    mapRef.current.addSource('cycling-route', {
-                        type: 'geojson',
-                        data: routeData as any
-                    });
+                    try {
+                        // Extract coordinates for directions
+                        const coords = locationData.features.map(f => f.geometry.coordinates as [number, number]);
 
-                    mapRef.current.addLayer({
-                        id: 'cycling-route-line',
-                        type: 'line',
-                        source: 'cycling-route',
-                        layout: {
-                            'line-join': 'round',
-                            'line-cap': 'round'
-                        },
-                        paint: {
-                            'line-color': '#2D5A27',
-                            'line-width': 5,
-                            'line-opacity': 0.7
+                        const data = await fetchDirections(coords);
+                        const route = data.routes[0];
+
+                        if (onStepsChange) {
+                            onStepsChange(route.legs[0].steps);
                         }
-                    });
+
+                        mapRef.current.addSource('cycling-route', {
+                            type: 'geojson',
+                            data: {
+                                type: 'Feature',
+                                properties: {},
+                                geometry: route.geometry
+                            }
+                        });
+
+                        mapRef.current.addLayer({
+                            id: 'cycling-route-line',
+                            type: 'line',
+                            source: 'cycling-route',
+                            layout: {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            paint: {
+                                'line-color': '#2D5A27',
+                                'line-width': 6,
+                                'line-opacity': 0.8
+                            }
+                        });
+
+                        // Fit map to route & course
+                        const bounds = new mapboxgl.LngLatBounds();
+                        route.geometry.coordinates.forEach((c: [number, number]) => bounds.extend(c));
+
+                        if (courseData && courseData.features && courseData.features[0].geometry.coordinates) {
+                            courseData.features[0].geometry.coordinates.forEach((c: any) => bounds.extend(c as [number, number]));
+                        }
+
+                        mapRef.current.fitBounds(bounds, { padding: 50 });
+
+                    } catch (e) {
+                        console.error('Failed to fetch route:', e);
+                    }
                 });
             } catch (e) {
                 console.error('Failed to initialize Mapbox:', e);
