@@ -85,7 +85,7 @@ export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true)
             // Voice Announcement Logic
             // Timing depends on speed
             const isHighSpeed = speedRef.current > 15;
-            const threshold = isHighSpeed ? 150 : 50; // meters
+            const threshold = isHighSpeed ? 200 : 80; // meters (Increased from 150/50 for better matching tolerance)
 
             // Debug Log
             // console.log(`Nav: nearest=${nearestStepIndex}, dist=${Math.round(minDistance)}m, threshold=${threshold}m, last=${lastAnnouncedStepIndex.current}`);
