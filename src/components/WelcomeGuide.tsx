@@ -12,43 +12,56 @@ interface WelcomeGuideProps {
 const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSelectRoute, onClose }) => {
     const [recommendedRoutes, setRecommendedRoutes] = useState<ExplorationRoute[]>([]);
     const [distances, setDistances] = useState<{ [key: string]: number }>({});
+    const [isLocating, setIsLocating] = useState(true);
 
     useEffect(() => {
-        if (!userLocation || routes.length === 0) return;
+        if (userLocation) {
+            // Location found: Calculate distances
+            const userLngLat = new mapboxgl.LngLat(userLocation.lng, userLocation.lat);
+            const routeDistances: { route: ExplorationRoute, dist: number }[] = [];
 
-        const userLngLat = new mapboxgl.LngLat(userLocation.lng, userLocation.lat);
-        const routeDistances: { route: ExplorationRoute, dist: number }[] = [];
+            routes.forEach(route => {
+                if (route.category !== 'route') return;
+                const startLngLat = new mapboxgl.LngLat(route.startPoint[0], route.startPoint[1]);
+                const dist = userLngLat.distanceTo(startLngLat) / 1000;
+                routeDistances.push({ route, dist });
+            });
 
-        routes.forEach(route => {
-            if (route.category !== 'route') return; // Only suggest routes
+            routeDistances.sort((a, b) => a.dist - b.dist);
+            setRecommendedRoutes(routeDistances.slice(0, 2).map(item => item.route));
 
-            const startLngLat = new mapboxgl.LngLat(route.startPoint[0], route.startPoint[1]);
-            const dist = userLngLat.distanceTo(startLngLat) / 1000; // km
-            routeDistances.push({ route, dist });
-        });
-
-        // Sort by distance
-        routeDistances.sort((a, b) => a.dist - b.dist);
-
-        // Pick top 2
-        setRecommendedRoutes(routeDistances.slice(0, 2).map(item => item.route));
-
-        // Store formatted distances
-        const distMap: { [key: string]: number } = {};
-        routeDistances.forEach(item => {
-            distMap[item.route.id] = parseFloat(item.dist.toFixed(1));
-        });
-        setDistances(distMap);
-
+            const distMap: { [key: string]: number } = {};
+            routeDistances.forEach(item => {
+                distMap[item.route.id] = parseFloat(item.dist.toFixed(1));
+            });
+            setDistances(distMap);
+            setIsLocating(false);
+        } else {
+            // No location yet: Set timeout for fallback
+            const timer = setTimeout(() => {
+                setIsLocating(false);
+                // Fallback to first 2 routes (or default ones)
+                setRecommendedRoutes(routes.filter(r => r.category === 'route').slice(0, 2));
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
     }, [userLocation, routes]);
 
-    if (!userLocation) {
-        // Simple loading state or generic welcome if location not found yet
+    if (isLocating) {
         return (
             <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg mb-4 md:mb-0 animate-slide-up text-center">
+                <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg mb-4 md:mb-0 animate-slide-up text-center relative">
+                    <button
+                        onClick={onClose}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 p-2"
+                    >
+                        ✕
+                    </button>
                     <h2 className="text-2xl font-bold text-satoyama-forest mb-2 font-outfit">Welcome to Green-Gear</h2>
-                    <p className="text-satoyama-soil animate-pulse">Locating you to find the best trails...</p>
+                    <p className="text-satoyama-soil animate-pulse mb-4">Locating you to find the best trails...</p>
+                    <div className="flex justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-satoyama-forest"></div>
+                    </div>
                 </div>
             </div>
         );
@@ -60,8 +73,16 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
                 {/* Header */}
                 <div className="bg-satoyama-forest p-6 text-white text-center relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors text-xl font-bold z-20"
+                    >
+                        ✕
+                    </button>
                     <h2 className="text-3xl font-bold font-outfit relative z-10">Welcome!</h2>
-                    <p className="text-white/80 text-sm mt-1 relative z-10">Based on your location, we recommend:</p>
+                    <p className="text-white/80 text-sm mt-1 relative z-10">
+                        {userLocation ? 'Based on your location, we recommend:' : 'Explore our recommended routes:'}
+                    </p>
                 </div>
 
                 {/* Recommendations */}
@@ -90,9 +111,13 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
                                         {route.name}
                                     </h3>
                                     <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                                        <span className="flex items-center gap-1">
-                                            📍 <span className="font-bold text-satoyama-forest">{distances[route.id]} km</span> away
-                                        </span>
+                                        {distances[route.id] !== undefined ? (
+                                            <span className="flex items-center gap-1">
+                                                📍 <span className="font-bold text-satoyama-forest">{distances[route.id]} km</span> away
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-400 italic">Distance unknown</span>
+                                        )}
                                         <span className="w-1 h-1 bg-gray-300 rounded-full" />
                                         <span>Length: {route.distance} km</span>
                                     </div>
