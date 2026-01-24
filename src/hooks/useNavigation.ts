@@ -10,7 +10,7 @@ interface NavigationState {
     isNavigating: boolean;
 }
 
-export const useNavigation = (routeSteps: any[]) => {
+export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true) => {
     const [state, setState] = useState<NavigationState>({
         currentStep: null,
         nextStep: null,
@@ -96,7 +96,7 @@ export const useNavigation = (routeSteps: any[]) => {
                     // Announce!
                     const instruction = step.voiceInstructions?.[0]?.announcement || step.maneuver.instruction;
                     console.log(`Speaking Step ${nearestStepIndex}: ${instruction}`);
-                    speak(instruction);
+                    if (isVoiceEnabled) speak(instruction);
                     lastAnnouncedStepIndex.current = nearestStepIndex;
                 }
             }
@@ -113,7 +113,7 @@ export const useNavigation = (routeSteps: any[]) => {
 
     const startNavigation = () => {
         console.log("Starting Navigation");
-        speak("案内を開始します。安全運転で走行してください。");
+        if (isVoiceEnabled) speak("案内を開始します。安全運転で走行してください。");
         lastAnnouncedStepIndex.current = -1;
         setState(prev => ({ ...prev, isNavigating: true }));
     };

@@ -30,6 +30,7 @@ function App() {
     // Navigation State
     const [routeSteps, setRouteSteps] = useState<any[]>([]);
     const [routeGeometry, setRouteGeometry] = useState<any>(null); // New: Store geometry for simulation
+    const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
 
     // ... (rest of hooks)
 
@@ -58,7 +59,7 @@ function App() {
         currentSpeed,
         updateLocation,
         startNavigation
-    } = useNavigation(routeSteps);
+    } = useNavigation(routeSteps, isVoiceEnabled);
 
     // ... (rest of useEffects)
 
@@ -202,6 +203,8 @@ function App() {
                         onStartSimulation={handleToggleSimulation}
                         speed={simSpeed}
                         onSpeedChange={setSpeed}
+                        isVoiceEnabled={isVoiceEnabled}
+                        onVoiceChange={setIsVoiceEnabled}
                         className="absolute bottom-6 left-4 right-4 md:bottom-8 md:left-8 md:right-auto z-30"
                     />
                 )}

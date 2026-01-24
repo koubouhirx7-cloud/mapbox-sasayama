@@ -7,10 +7,12 @@ interface CourseInfoPanelProps {
     isSimulating: boolean;
     speed: number;
     onSpeedChange: (speed: number) => void;
+    isVoiceEnabled: boolean;
+    onVoiceChange: (enabled: boolean) => void;
     className?: string;
 }
 
-const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulation, isSimulating, speed, onSpeedChange, className = '' }) => {
+const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulation, isSimulating, speed, onSpeedChange, isVoiceEnabled, onVoiceChange, className = '' }) => {
     return (
         <div className={`bg-white/90 backdrop-blur-md p-5 rounded-xl shadow-2xl border border-satoyama-forest/10 max-w-sm md:max-w-md ${className}`}>
             <div className="flex items-start justify-between gap-4 mb-3">
@@ -37,6 +39,27 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulat
             <p className="text-sm text-satoyama-soil leading-relaxed mb-4 border-t border-dashed border-satoyama-leaf/30 pt-3">
                 {route.description || 'No description available.'}
             </p>
+
+            {/* Voice Toggle (Always visible for routes) */}
+            {route.category === 'route' && (
+                <div className="flex items-center justify-between mb-4 bg-[#2D5A27]/5 p-3 rounded-lg border border-[#2D5A27]/10">
+                    <div className="flex items-center gap-2">
+                        <span className="text-lg">{isVoiceEnabled ? '🔊' : '🔇'}</span>
+                        <div className="text-xs font-bold text-satoyama-forest">
+                            <div>音声案内 (Voice)</div>
+                            <div className="text-[10px] text-satoyama-leaf font-normal leading-none mt-0.5">{isVoiceEnabled ? '有効 (ON)' : '無効 (OFF)'}</div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => onVoiceChange(!isVoiceEnabled)}
+                        className={`relative w-11 h-6 rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2D5A27] ${isVoiceEnabled ? 'bg-[#2D5A27]' : 'bg-gray-300'}`}
+                        title={isVoiceEnabled ? "Mute Voice" : "Enable Voice"}
+                    >
+                        <span className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 shadow-sm transform ${isVoiceEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                </div>
+            )}
 
             {route.category === 'route' && (
                 <div className="space-y-3">
