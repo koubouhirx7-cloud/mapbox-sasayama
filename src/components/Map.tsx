@@ -260,7 +260,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
         // Fit bounds to show the entire route
         if (targetRoute.data && targetRoute.category === 'route') {
             const bounds = new mapboxgl.LngLatBounds();
-            targetRoute.data.features.forEach((feature: any) => {
+            targetRoute.data.features?.forEach((feature: any) => {
                 if (feature.geometry.type === 'LineString') {
                     feature.geometry.coordinates.forEach((coord: [number, number]) => {
                         bounds.extend(coord);
@@ -291,7 +291,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                 if (!targetRoute.data) return;
 
                 // Find the proper LineString feature for the route path
-                const routeFeature = targetRoute.data.features.find((f: any) => f.geometry.type === 'LineString');
+                const routeFeature = targetRoute.data.features?.find((f: any) => f.geometry.type === 'LineString');
                 if (!routeFeature) return;
 
                 // Sample coordinates from route data to force the route match
