@@ -144,9 +144,21 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                     });
 
                     // Interactions (Popup & FlyTo)
+                    let hoverPopup: mapboxgl.Popup | null = null;
+
                     const showPopup = (e: any) => {
                         const description = e.features[0].properties.title;
-                        new mapboxgl.Popup()
+
+                        // If popup doesn't exist, create it
+                        if (!hoverPopup) {
+                            hoverPopup = new mapboxgl.Popup({
+                                closeButton: false,
+                                closeOnClick: false
+                            });
+                        }
+
+                        // Update styling and content
+                        hoverPopup
                             .setLngLat(e.lngLat)
                             .setHTML(`<div class="px-2 py-1 text-sm font-bold text-satoyama-forest">${description}</div>`)
                             .addTo(map);
@@ -159,6 +171,10 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                         });
                         map.on('mouseleave', layer, () => {
                             map.getCanvas().style.cursor = '';
+                            if (hoverPopup) {
+                                hoverPopup.remove();
+                                hoverPopup = null;
+                            }
                         });
                         map.on('click', layer, (e) => {
                             map.flyTo({ center: e.lngLat, zoom: 15, duration: 1500 });
