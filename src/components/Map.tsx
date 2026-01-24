@@ -15,6 +15,7 @@ interface MapProps {
     activeRoute: 'mock-loop-west' | string;
     simulatedLocation?: { lat: number, lng: number, bearing?: number } | null;
     onRouteLoaded?: (route: any) => void;
+    selectionTimestamp?: number;
 }
 
 // Helper to create a circle GeoJSON
@@ -34,7 +35,7 @@ const createGeoJSONCircle = (center: [number, number], radiusInKm: number, point
     return ret;
 };
 
-const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocationChange, activeRoute, simulatedLocation, onRouteLoaded }) => {
+const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocationChange, activeRoute, simulatedLocation, onRouteLoaded, selectionTimestamp }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -390,7 +391,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
         };
 
         loadRoute();
-    }, [activeRoute, targetRoute, mapInstance]);
+    }, [activeRoute, targetRoute, mapInstance, selectionTimestamp]);
 
     const toggle3D = () => {
         if (!mapRef.current) return;

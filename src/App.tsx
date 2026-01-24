@@ -12,6 +12,7 @@ type RouteType = 'sasayama-main' | string;
 
 function App() {
     const [activeRoute, setActiveRoute] = useState<RouteType>('sasayama-main')
+    const [selectionTimestamp, setSelectionTimestamp] = useState<number>(0);
 
     // Debug: Trace route changes
     useEffect(() => {
@@ -148,6 +149,7 @@ function App() {
                                     key={route.id}
                                     onClick={() => {
                                         setActiveRoute(route.id);
+                                        setSelectionTimestamp(Date.now());
                                         setIsSidebarOpen(false);
                                     }}
                                     className={`w-full text-left px-4 py-4 rounded-lg transition-all duration-200 flex items-center gap-3 group min-h-[50px]
@@ -173,6 +175,7 @@ function App() {
                                     key={route.id}
                                     onClick={() => {
                                         setActiveRoute(route.id);
+                                        setSelectionTimestamp(Date.now());
                                         setIsSidebarOpen(false);
                                     }}
                                     className={`w-full text-left px-4 py-4 rounded-lg transition-all duration-200 flex items-center gap-3 group min-h-[50px]
@@ -216,6 +219,7 @@ function App() {
                 <Map
                     activeRoute={activeRoute}
                     simulatedLocation={simulatedLocation}
+                    selectionTimestamp={selectionTimestamp}
                     onUserLocationChange={(lat, lng) => {
                         // Only update real location if not simulating
                         if (!isSimulating) {
@@ -240,6 +244,7 @@ function App() {
                         routes={explorationRoutes}
                         onSelectRoute={(id) => {
                             setActiveRoute(id);
+                            setSelectionTimestamp(Date.now());
                             setShowWelcome(false);
                         }}
                         onClose={() => setShowWelcome(false)}
