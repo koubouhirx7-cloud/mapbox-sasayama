@@ -24,12 +24,14 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
 function App() {
     const [activeRoute, setActiveRoute] = useState<RouteType>('sasayama-main')
     const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null)
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Navigation State
     const [routeSteps, setRouteSteps] = useState<any[]>([]);
     const [routeGeometry, setRouteGeometry] = useState<any>(null); // New: Store geometry for simulation
 
-    // Simulation Hook
+    // ... (rest of hooks)
+
     const {
         isPlaying: isSimulating,
         toggleSimulation,
@@ -46,12 +48,7 @@ function App() {
         startNavigation
     } = useNavigation(routeSteps);
 
-    // Auto-start navigation when steps are loaded (simplification for this task)
-    useEffect(() => {
-        if (routeSteps.length > 0) {
-            startNavigation();
-        }
-    }, [routeSteps]);
+    // ... (rest of useEffects)
 
     // Feed simulated location to navigation logic
     useEffect(() => {
@@ -60,19 +57,10 @@ function App() {
         }
     }, [isSimulating, simulatedLocation]);
 
-    // Sort routes by proximity to user
-    const sortedRoutes = useMemo(() => {
-        if (!userLocation) return explorationRoutes;
-        return [...explorationRoutes]
-            .map(route => ({
-                ...route,
-                distance: getDistance(userLocation.lat, userLocation.lng, route.startPoint[1], route.startPoint[0])
-            }))
-            .sort((a, b) => (a.distance || 0) - (b.distance || 0));
-    }, [userLocation]);
+    // ... (sortedRoutes memo)
 
     return (
-        <div className="flex w-screen h-screen bg-satoyama-mist font-sans">
+        <div className="flex w-screen h-screen bg-satoyama-mist font-sans relative overflow-hidden">
             <style>
                 {`
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -93,9 +81,31 @@ function App() {
                 `}
             </style>
 
+            {/* Mobile Menu Toggle Button */}
+            <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="absolute top-4 left-4 z-[60] p-2 bg-satoyama-forest text-white rounded-md shadow-lg md:hidden border border-white/20"
+                aria-label="Toggle Menu"
+            >
+                {isSidebarOpen ? '✕' : '☰'}
+            </button>
+
+            {/* Mobile Overlay */}
+            {isSidebarOpen && (
+                <div
+                    className="absolute inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
             {/* Left Sidebar */}
-            <aside className="w-64 bg-satoyama-forest text-satoyama-mist flex-shrink-0 flex flex-col shadow-2xl z-50">
-                <div className="p-6 border-b border-white/10">
+            <aside className={`
+                absolute md:relative z-50 h-full w-64 
+                bg-satoyama-forest text-satoyama-mist flex-shrink-0 flex flex-col shadow-2xl 
+                transition-transform duration-300 ease-in-out
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}>
+                <div className="p-6 border-b border-white/10 mt-12 md:mt-0">
                     <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3 text-white">
                         <span className="text-3xl">🚲</span>
                         Green-Gear
@@ -109,7 +119,10 @@ function App() {
                         {explorationRoutes.map((route) => (
                             <button
                                 key={route.id}
-                                onClick={() => setActiveRoute(route.id)}
+                                onClick={() => {
+                                    setActiveRoute(route.id);
+                                    setIsSidebarOpen(false); // Auto-close on mobile
+                                }}
                                 className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center gap-3 group
                                     ${activeRoute === route.id
                                         ? 'bg-white text-satoyama-forest shadow-md font-bold ring-1 ring-white'
@@ -142,6 +155,7 @@ function App() {
                                 const utterance = new SpeechSynthesisUtterance('');
                                 window.speechSynthesis.speak(utterance);
                                 toggleSimulation();
+                                if (!isSimulating) setIsSidebarOpen(false); // Close menu when starting sim
                             }}
                             className={`w-full py-2 rounded text-xs font-bold transition-colors ${isSimulating
                                 ? 'bg-red-500/20 text-red-200 border border-red-500/50 hover:bg-red-500/30'
