@@ -241,12 +241,24 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                             const allSteps = filteredSteps.map((step: any) => {
                                 const cleanText = (text: string) => {
                                     if (!text) return text;
-                                    // Remove phrases like "then you will arrive at your destination" or "目的地に到着します"
-                                    return text
+                                    // Remove destination references first
+                                    let cleaned = text
                                         .replace(/(and )?you will arrive at your destination/gi, '')
                                         .replace(/, then you will arrive/gi, '')
                                         .replace(/目的地に到着(します|です)?/g, '')
-                                        .replace(/目的地/g, ''); // Fallback
+                                        .replace(/目的地/g, '')
+                                        .trim();
+
+                                    // Fix Japanese conjugation at the end of the sentence
+                                    // e.g., "右折して、" -> "右折します"
+                                    if (cleaned.endsWith('して、') || cleaned.endsWith('して')) {
+                                        cleaned = cleaned.replace(/して、?$/, 'します');
+                                    }
+
+                                    // Remove trailing punctuation
+                                    cleaned = cleaned.replace(/[、,]\s*$/, '');
+
+                                    return cleaned;
                                 };
 
                                 const newStep = { ...step };
