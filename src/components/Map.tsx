@@ -272,27 +272,17 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
             if (!bounds.isEmpty()) {
                 map.fitBounds(bounds, {
                     padding: { top: 50, bottom: 200, left: 50, right: 50 },
-                    duration: 2000,
-                    bearing: 0,
-                    pitch: 0
+                    duration: 2000
                 });
             } else {
-                map.flyTo({
-                    center: targetRoute.startPoint,
-                    zoom: 14,
-                    duration: 2000,
-                    bearing: 0,
-                    pitch: 0
-                });
+                map.flyTo({ center: targetRoute.startPoint, zoom: 14, duration: 2000 });
             }
         } else {
             // Fallback for areas or missing data
             map.flyTo({
                 center: targetRoute.startPoint,
                 zoom: targetRoute.category === 'area' ? 15 : 14,
-                duration: 2000,
-                bearing: 0,
-                pitch: 0
+                duration: 2000
             });
         }
 
@@ -461,11 +451,18 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
             // Only force zoom on the first frame of simulation to allow manual zoom (scale change) afterwards
             // User requested "Swipe to change scale" (Manual Zoom)
             if (hasInitialZoomedRef && !hasInitialZoomedRef.current) {
-                cameraOptions.zoom = 16.5; // Initial "Zoom up"
+                // Force an immediate snap to North Up, Tilt, and Zoom on the very first frame
+                mapRef.current.jumpTo({
+                    center: [simulatedLocation.lng, simulatedLocation.lat],
+                    bearing: 0,
+                    pitch: 45,
+                    zoom: 16.5
+                });
                 hasInitialZoomedRef.current = true;
+            } else {
+                // Continuous smooth follow
+                mapRef.current.easeTo(cameraOptions);
             }
-
-            mapRef.current.easeTo(cameraOptions);
         } else {
             if (hasInitialZoomedRef) hasInitialZoomedRef.current = false; // Reset for next run
             if (simulationMarkerRef.current) {
