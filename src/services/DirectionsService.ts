@@ -28,7 +28,7 @@ export const fetchDirections = async (coordinates: [number, number][]): Promise<
     if (!token) throw new Error('Mapbox token is missing');
 
     const coordsString = coordinates.map(c => c.join(',')).join(';');
-    const url = `https://api.mapbox.com/directions/v5/mapbox/cycling/${coordsString}?steps=true&geometries=geojson&access_token=${token}&language=ja`;
+    const url = `https://api.mapbox.com/directions/v5/mapbox/cycling/${coordsString}?steps=true&geometries=geojson&access_token=${token}&language=ja&voice_instructions=true&banner_instructions=true`;
 
     const response = await fetch(url);
     if (!response.ok) {

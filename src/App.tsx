@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import Map from './components/Map'
-import NavigationPopup from './components/NavigationPopup'
+import NavigationBanner from './components/NavigationPopup' // Still using the same file but renamed component inside
 import { explorationRoutes } from './data/explorationRoutes'
+import { useNavigation } from './hooks/useNavigation'
 
 type RouteType = 'sasayama-main' | string;
 
@@ -22,9 +23,25 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
 function App() {
     const [activeRoute, setActiveRoute] = useState<RouteType>('sasayama-main')
     const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null)
-    const [proximityAlert, setProximityAlert] = useState<{ step: any, distance: number } | null>(null)
 
-    // Sort routes by proximity to user (optional logic kept if needed later, but simplified for now)
+    // Navigation State
+    const [routeSteps, setRouteSteps] = useState<any[]>([]);
+    const {
+        currentStep,
+        distanceToNext,
+        currentSpeed,
+        updateLocation,
+        startNavigation
+    } = useNavigation(routeSteps);
+
+    // Auto-start navigation when steps are loaded (simplification for this task)
+    useEffect(() => {
+        if (routeSteps.length > 0) {
+            startNavigation();
+        }
+    }, [routeSteps]);
+
+    // Sort routes by proximity to user
     const sortedRoutes = useMemo(() => {
         if (!userLocation) return explorationRoutes;
         return [...explorationRoutes]
@@ -46,6 +63,14 @@ function App() {
                 
                 .no-scrollbar::-webkit-scrollbar { display: none; }
                 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                
+                @keyframes slide-down {
+                    0% { transform: translate(-50%, -100%); opacity: 0; }
+                    100% { transform: translate(-50%, 0); opacity: 1; }
+                }
+                .animate-slide-down {
+                    animation: slide-down 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+                }
                 `}
             </style>
 
@@ -85,23 +110,23 @@ function App() {
 
             {/* Main Map Area */}
             <main className="flex-grow relative h-full">
-                {proximityAlert && (
-                    <NavigationPopup
-                        step={proximityAlert.step}
-                        distance={proximityAlert.distance}
+                {currentStep && (
+                    <NavigationBanner
+                        step={currentStep}
+                        distance={distanceToNext}
+                        speed={currentSpeed}
                     />
                 )}
 
                 <Map
                     activeRoute={activeRoute}
-                    onUserLocationChange={(lat, lng) => setUserLocation({ lat, lng })}
-                    onProximityChange={(step, distance) => {
-                        if (step && distance !== null) {
-                            setProximityAlert({ step, distance });
-                        } else {
-                            setProximityAlert(null);
-                        }
+                    onUserLocationChange={(lat, lng) => {
+                        setUserLocation({ lat, lng });
+                        updateLocation(lat, lng);
                     }}
+                    onStepsChange={setRouteSteps}
+                    // Deprecated proximity logic removed in favor of useNavigation hook
+                    onProximityChange={() => { }}
                 />
             </main>
         </div>
