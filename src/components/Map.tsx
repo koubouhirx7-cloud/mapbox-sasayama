@@ -436,10 +436,12 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
 
             // Camera follow with easing
             // Enforce North Up (bearing 0) and 45-degree pitch as per user request
+            // Zoom: User requested ~200m scale (approx zoom 16.5)
             mapRef.current.easeTo({
                 center: [simulatedLocation.lng, simulatedLocation.lat],
                 pitch: 45,
                 bearing: 0,
+                zoom: 16.5,
                 duration: 100, // Short duration for smooth continuous update
                 easing: (t) => t
             });
