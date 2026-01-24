@@ -1,5 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 
+// Helper to calculate bearing between two points
+const calculateBearing = (start: number[], end: number[]) => {
+    const toRad = (deg: number) => deg * Math.PI / 180;
+    const toDeg = (rad: number) => rad * 180 / Math.PI;
+
+    const lat1 = toRad(start[1]);
+    const lat2 = toRad(end[1]);
+    const dLon = toRad(end[0] - start[0]);
+
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) -
+        Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
+};
+
 // Simplified helper to find a point along a line string at a given distance
 const getPointAlongLine = (coordinates: number[][], distanceKm: number) => {
     let traveled = 0;
@@ -24,22 +40,28 @@ const getPointAlongLine = (coordinates: number[][], distanceKm: number) => {
 
         if (traveled + segmentDist > distanceKm) {
             const ratio = (distanceKm - traveled) / segmentDist;
-            return [
+            const point = [
                 start[0] + (end[0] - start[0]) * ratio,
                 start[1] + (end[1] - start[1]) * ratio
             ];
+            const bearing = calculateBearing(start, end);
+            return { point, bearing };
         }
 
         traveled += segmentDist;
     }
 
-    return coordinates[coordinates.length - 1]; // End of line
+    // End of line
+    return {
+        point: coordinates[coordinates.length - 1],
+        bearing: calculateBearing(coordinates[coordinates.length - 2], coordinates[coordinates.length - 1])
+    };
 };
 
 export const useSimulation = (routeGeoJSON: any) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [speed, setSpeed] = useState(25); // km/h
-    const [simulatedLocation, setSimulatedLocation] = useState<{ lat: number, lng: number } | null>(null);
+    const [simulatedLocation, setSimulatedLocation] = useState<{ lat: number, lng: number, bearing: number } | null>(null);
 
     const requestRef = useRef<number>();
     const progressRef = useRef(0); // distance traveled in km
@@ -52,10 +74,14 @@ export const useSimulation = (routeGeoJSON: any) => {
 
             progressRef.current += distancePerFrame;
 
-            const point = getPointAlongLine(routeGeoJSON.geometry.coordinates, progressRef.current);
+            const result = getPointAlongLine(routeGeoJSON.geometry.coordinates, progressRef.current);
 
-            if (point) {
-                setSimulatedLocation({ lat: point[1], lng: point[0] });
+            if (result) {
+                setSimulatedLocation({
+                    lat: result.point[1],
+                    lng: result.point[0],
+                    bearing: result.bearing
+                });
             } else {
                 // End of route or error (reset)
                 progressRef.current = 0;

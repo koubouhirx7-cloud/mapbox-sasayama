@@ -13,7 +13,7 @@ interface MapProps {
     onProximityChange?: (step: any, distance: number | null) => void;
     onUserLocationChange?: (lat: number, lng: number) => void;
     activeRoute: 'mock-loop-west' | string;
-    simulatedLocation?: { lat: number, lng: number } | null;
+    simulatedLocation?: { lat: number, lng: number, bearing?: number } | null;
     onRouteLoaded?: (route: any) => void;
 }
 
@@ -374,25 +374,44 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
         if (simulatedLocation) {
             if (!simulationMarkerRef.current) {
                 const el = document.createElement('div');
-                el.className = 'simulation-marker';
-                el.style.backgroundColor = '#FF8C00';
-                el.style.width = '20px';
-                el.style.height = '20px';
-                el.style.borderRadius = '50%';
-                el.style.border = '2px solid white';
-                el.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
+                el.className = 'simulation-marker-arrow';
+                // Navigation Arrow SVG (Triangle)
+                el.innerHTML = `
+                <svg width="40" height="40" viewBox="0 0 100 100" style="display:block;">
+                    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.3)"/>
+                    </filter>
+                    <path d="M50 15 L85 85 L50 70 L15 85 Z" fill="#FF8C00" stroke="white" stroke-width="4" filter="url(#shadow)" />
+                </svg>
+                `;
+                el.style.width = '40px';
+                el.style.height = '40px';
 
-                simulationMarkerRef.current = new mapboxgl.Marker({ element: el })
+                simulationMarkerRef.current = new mapboxgl.Marker({
+                    element: el,
+                    rotationAlignment: 'map',
+                    pitchAlignment: 'map'
+                })
                     .setLngLat([simulatedLocation.lng, simulatedLocation.lat])
+                    .setRotation(simulatedLocation.bearing || 0)
                     .addTo(mapRef.current);
             } else {
                 simulationMarkerRef.current.setLngLat([simulatedLocation.lng, simulatedLocation.lat]);
+                if (simulatedLocation.bearing !== undefined) {
+                    simulationMarkerRef.current.setRotation(simulatedLocation.bearing);
+                }
             }
 
-            // Optional: Camera follow
+            // Camera follow with easing
+            // If we are simulating, we probably want to "follow" the puck.
+            // Adjust camera bearing as well? "Course Up"?
+            // If the user manually toggled 3D, maybe we rotate the map too.
+            // Let's stick to simple "Course Up" if is3D is true.
+            // But modifying the camera bearing here might conflict with user interaction.
+            // For now, just follow position.
             mapRef.current.easeTo({
                 center: [simulatedLocation.lng, simulatedLocation.lat],
-                duration: 100,
+                duration: 100, // Short duration for smooth continuous update
                 easing: (t) => t
             });
         } else {
