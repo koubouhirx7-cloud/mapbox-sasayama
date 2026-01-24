@@ -257,16 +257,28 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                             const allSteps = filteredSteps.map((step: any) => {
                                 const cleanText = (text: string) => {
                                     if (!text) return text;
-                                    // Remove destination references first
+
+                                    // Remove destination references first (Aggressive removal of clauses)
                                     let cleaned = text
+                                        // Japanese Patterns: Remove entire clauses
+                                        .replace(/目的地は.*(あります|です)/g, '')   // "目的地は右側にあります" -> ""
+                                        .replace(/まもなく目的地.*(です|ます)/g, '')   // "まもなく目的地周辺です" -> ""
+                                        .replace(/(そして)?目的地に到着(します|です|しました)?/g, '') // "目的地に到着します" -> ""
+
+                                        // English Patterns
                                         .replace(/(and )?you will arrive at your destination/gi, '')
+                                        .replace(/the destination is on your (left|right)/gi, '')
                                         .replace(/, then you will arrive/gi, '')
-                                        .replace(/目的地に到着(します|です)?/g, '')
+
+                                        // Fallbacks
                                         .replace(/目的地/g, '')
                                         .trim();
 
+                                    // Cleanup leading/trailing punctuation left behind
+                                    cleaned = cleaned.replace(/^[、。,]\s*/, '');
+
                                     // Fix Japanese conjugation at the end of the sentence
-                                    // e.g., "右折して、" -> "右折します"
+                                    // e.g., "右折して、" -> "右折します" (because "目的地..." was removed after it)
                                     if (cleaned.endsWith('して、') || cleaned.endsWith('して')) {
                                         cleaned = cleaned.replace(/して、?$/, 'します');
                                     }
