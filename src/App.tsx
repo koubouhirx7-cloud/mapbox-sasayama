@@ -6,22 +6,9 @@ import { explorationRoutes } from './data/explorationRoutes'
 import { useNavigation } from './hooks/useNavigation'
 import { useSimulation } from './hooks/useSimulation'
 import WelcomeGuide from './components/WelcomeGuide'
+import { getDistance } from './utils/distance'
 
 type RouteType = 'sasayama-main' | string;
-
-// Helper to calculate distance in meters (Haversine formula approximation for small distances)
-function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
-    const R = 6371e3; // meters
-    const phi1 = lat1 * Math.PI / 180;
-    const phi2 = lat2 * Math.PI / 180;
-    const deltaPhi = (lat2 - lat1) * Math.PI / 180;
-    const deltaLambda = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-        Math.cos(phi1) * Math.cos(phi2) *
-        Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-}
 
 function App() {
     const [activeRoute, setActiveRoute] = useState<RouteType>('sasayama-main')
