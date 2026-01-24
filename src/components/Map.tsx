@@ -228,8 +228,13 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                     if (data.routes && data.routes.length > 0) {
                         const route = data.routes[0];
                         if (onStepsChange) {
-                            // Extract steps from all legs (usually just 1 leg for simple routes, but could be multiple if waypoints used)
-                            const allSteps = route.legs.flatMap((leg: any) => leg.steps);
+                            // Extract steps from all legs
+                            // Filter out intermediate "Arrive" steps (waypoints) to prevent falsely announcing destination at every sample point
+                            const rawSteps = route.legs.flatMap((leg: any) => leg.steps);
+                            const allSteps = rawSteps.filter((step: any, index: number) => {
+                                // Keep the step if it's NOT an arrival, OR if it's the very last step
+                                return step.maneuver.type !== 'arrive' || index === rawSteps.length - 1;
+                            });
                             onStepsChange(allSteps);
                         }
                         // removed onRouteLoaded call to keep simulation on the GPX trace
