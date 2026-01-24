@@ -14,6 +14,7 @@ interface MapProps {
     onUserLocationChange?: (lat: number, lng: number) => void;
     activeRoute: 'mock-loop-west' | string;
     simulatedLocation?: { lat: number, lng: number } | null;
+    onRouteLoaded?: (route: any) => void;
 }
 
 // Helper to create a circle GeoJSON
@@ -33,7 +34,7 @@ const createGeoJSONCircle = (center: [number, number], radiusInKm: number, point
     return ret;
 };
 
-const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocationChange, activeRoute }) => {
+const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocationChange, activeRoute, simulatedLocation, onRouteLoaded }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -266,7 +267,13 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                 </button>
             </div>
 
-            {mapInstance && <GpxRouteLayer map={mapInstance} isVisible={activeRoute === 'sasayama-main'} />}
+            {mapInstance && (
+                <GpxRouteLayer
+                    map={mapInstance}
+                    isVisible={activeRoute === 'sasayama-main'}
+                    onRouteLoaded={onRouteLoaded}
+                />
+            )}
         </div>
     );
 };
