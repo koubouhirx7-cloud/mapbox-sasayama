@@ -42,6 +42,12 @@ function App() {
         toggleSimulation();
     };
 
+    const handleTestVoice = () => {
+        const utterance = new SpeechSynthesisUtterance('音声案内のテストです');
+        utterance.lang = 'ja-JP';
+        window.speechSynthesis.speak(utterance);
+    };
+
     const {
         currentStep,
         distanceToNext,
