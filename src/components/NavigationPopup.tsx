@@ -10,8 +10,8 @@ const NavigationPopup: React.FC<NavigationPopupProps> = ({ step, distance }) => 
     if (!step) return null;
 
     return (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md animate-bounce-in">
-            <div className="bg-satoyama-forest/95 backdrop-blur-xl rounded-2xl shadow-3xl border border-white/20 p-4 flex items-center gap-4 text-white">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-lg animate-slide-down">
+            <div className="bg-satoyama-forest/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-3 flex items-center gap-4 text-white">
                 <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center text-4xl shadow-inner">
                     {getStepIcon(step.maneuver.type, step.maneuver.modifier)}
                 </div>
