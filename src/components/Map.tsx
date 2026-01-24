@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { locationData } from '../data/locations';
 import { fetchDirections } from '../services/DirectionsService';
 import GpxRouteLayer from './GpxRouteLayer';
 import courseData from '../data/course.json';
+import { explorationRoutes } from '../data/explorationRoutes';
 
 const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
 
@@ -11,29 +12,44 @@ interface MapProps {
     onStepsChange?: (steps: any[]) => void;
     onProximityChange?: (step: any, distance: number | null) => void;
     onUserLocationChange?: (lat: number, lng: number) => void;
-    activeRoute: 'recommended' | string;
+    activeRoute: 'mock-loop-west' | string;
 }
+
+// Helper to create a circle GeoJSON
+const createGeoJSONCircle = (center: [number, number], radiusInKm: number, points = 64) => {
+    const coords = { latitude: center[1], longitude: center[0] };
+    const checkPoint = (i: number) => {
+        return [
+            coords.longitude + (radiusInKm / 111.32) * Math.cos(2 * Math.PI * i / points),
+            coords.latitude + (radiusInKm / 111.32) * Math.sin(2 * Math.PI * i / points)
+        ] as [number, number];
+    };
+    const ret: [number, number][] = [];
+    for (let i = 0; i < points; i++) {
+        ret.push(checkPoint(i));
+    }
+    ret.push(ret[0]);
+    return ret;
+};
 
 const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocationChange, activeRoute }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const markersRef = useRef<mapboxgl.Marker[]>([]);
-    const routeStepsRef = useRef<any[]>([]);
-    const [error, setError] = React.useState<string | null>(null);
-    const [mapInstance, setMapInstance] = React.useState<mapboxgl.Map | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+    const [is3D, setIs3D] = useState(false);
+
+    // Area Polygons
+    const sasayamaStationPoly = createGeoJSONCircle([135.1834, 35.0583], 0.8); // 800m radius
+    // Jokamachi Area (Simple estimation based on request)
+    const jokamachiPoly = createGeoJSONCircle([135.2166, 35.0755], 0.6); // Approx area for castle town
 
     useEffect(() => {
         const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
-        if (!token) {
-            console.error('Mapbox access token is missing.');
-            setError('Mapbox access token is missing. Please check your environment variables.');
-            return;
-        }
-
-        if (token === 'pk.YOUR_ACTUAL_TOKEN_HERE') {
-            console.warn('Mapbox access token is using placeholder value.');
-            setError('Mapbox access token is not configured correctly.');
+        if (!token || token === 'pk.YOUR_ACTUAL_TOKEN_HERE') {
+            setError('Mapbox access token is missing or invalid.');
             return;
         }
 
@@ -43,142 +59,123 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
             try {
                 mapRef.current = new mapboxgl.Map({
                     container: mapContainerRef.current,
-                    style: 'mapbox://styles/mapbox/outdoors-v12',
+                    style: 'mapbox://styles/mapbox/outdoors-v12', // 1. Outdoors Style
                     center: HIGHLANDER_COORDS,
-                    zoom: 15,
+                    zoom: 13,
+                    pitch: 0,
+                    bearing: 0
                 });
-                setMapInstance(mapRef.current);
 
-                // Add navigation controls (zoom, rotate)
-                mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                mapRef.current.on('style.load', () => {
+                    const map = mapRef.current!;
 
-                // Add Geolocation control
-                const geolocate = new mapboxgl.GeolocateControl({
-                    positionOptions: {
-                        enableHighAccuracy: true
-                    },
-                    trackUserLocation: true,
-                    showUserHeading: true
-                });
-                mapRef.current.addControl(geolocate, 'top-right');
-
-                // Proximity & Location tracking
-                geolocate.on('geolocate', (position: any) => {
-                    const { latitude, longitude } = position.coords;
-
-                    if (onUserLocationChange) {
-                        onUserLocationChange(latitude, longitude);
+                    // 2. Localize Labels & White Halo
+                    const layers = map.getStyle()?.layers;
+                    if (layers) {
+                        layers.forEach((layer) => {
+                            if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+                                map.setLayoutProperty(layer.id, 'text-field', ['get', 'name_ja']);
+                                map.setPaintProperty(layer.id, 'text-halo-color', '#ffffff');
+                                map.setPaintProperty(layer.id, 'text-halo-width', 2);
+                            }
+                        });
                     }
 
-                    if (!onProximityChange || activeRoute !== 'recommended') return;
+                    // 3. 3D Terrain
+                    map.addSource('mapbox-dem', {
+                        'type': 'raster-dem',
+                        'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                        'tileSize': 512,
+                        'maxzoom': 14
+                    });
+                    map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+                });
 
-                    const userCoords = new mapboxgl.LngLat(longitude, latitude);
-                    let closestStep = null;
-                    let minDistance = Infinity;
+                mapRef.current.on('load', async () => {
+                    const map = mapRef.current!;
+                    setMapInstance(map);
 
-                    routeStepsRef.current.forEach(step => {
-                        const stepCoords = new mapboxgl.LngLat(step.maneuver.location[0], step.maneuver.location[1]);
-                        const distance = userCoords.distanceTo(stepCoords);
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            closestStep = step;
-                        }
+                    // Add Navigation Controls
+                    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                    const geolocate = new mapboxgl.GeolocateControl({
+                        positionOptions: { enableHighAccuracy: true },
+                        trackUserLocation: true,
+                        showUserHeading: true
+                    });
+                    map.addControl(geolocate, 'top-right');
+
+                    geolocate.on('geolocate', (position: any) => {
+                        if (onUserLocationChange) onUserLocationChange(position.coords.latitude, position.coords.longitude);
                     });
 
-                    if (minDistance < 200 && closestStep) {
-                        onProximityChange(closestStep, minDistance);
-                    } else {
-                        onProximityChange(null, null);
-                    }
-                });
-
-                // Add Markers (POI)
-                locationData.features.forEach((feature: any) => {
-                    const coords = feature.geometry.coordinates as [number, number];
-                    const marker = new mapboxgl.Marker({ color: '#2D5A27' })
-                        .setLngLat(coords)
-                        .setPopup(
-                            new mapboxgl.Popup({
-                                offset: 30,
-                                maxWidth: '300px',
-                                className: 'satoyama-popup'
-                            })
-                                .setHTML(`
-                                    <div class="overflow-hidden rounded-lg shadow-sm border border-[#2D5A27]/20 bg-[#F4F1E8]">
-                                        <div class="bg-[#2D5A27] px-3 py-2">
-                                            <h3 class="font-bold text-white text-sm m-0 tracking-wide">${feature.properties.name}</h3>
-                                        </div>
-                                        <div class="p-3">
-                                            <p class="text-xs leading-relaxed text-[#4A3728] mb-2 line-clamp-3">${feature.properties.description}</p>
-                                            <div class="flex items-center gap-1.5 pt-2 border-t border-[#879166]/30">
-                                                <span class="w-2 h-2 rounded-full bg-[#879166]"></span>
-                                                <p class="text-[10px] font-bold uppercase tracking-wider text-[#2D5A27]">Green-Gear ポイント</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `)
-                        )
-                        .addTo(mapRef.current!);
-
-                    markersRef.current.push(marker);
-                });
-
-                // Add Route Line (Dynamic Recommended)
-                mapRef.current.on('load', async () => {
-                    if (!mapRef.current) return;
-
-                    try {
-                        const coords = locationData.features.map(f => f.geometry.coordinates as [number, number]);
-                        const data = await fetchDirections(coords);
-                        const route = data.routes[0];
-
-                        if (onStepsChange) {
-                            onStepsChange(route.legs[0].steps);
+                    // 4. Area Overlays
+                    // Sasayamaguchi Station Area
+                    map.addSource('area-station', {
+                        type: 'geojson',
+                        data: {
+                            type: 'Feature',
+                            properties: { title: '篠山口駅エリア' },
+                            geometry: { type: 'Polygon', coordinates: [sasayamaStationPoly] }
                         }
-                        routeStepsRef.current = route.legs[0].steps;
+                    });
+                    map.addLayer({
+                        id: 'area-station-fill',
+                        type: 'fill',
+                        source: 'area-station',
+                        paint: { 'fill-color': '#FF8C00', 'fill-opacity': 0.2 }
+                    });
 
-                        mapRef.current.addSource('cycling-route', {
-                            type: 'geojson',
-                            data: {
-                                type: 'Feature',
-                                properties: {},
-                                geometry: route.geometry
-                            }
-                        });
-
-                        mapRef.current.addLayer({
-                            id: 'cycling-route-line',
-                            type: 'line',
-                            source: 'cycling-route',
-                            layout: {
-                                'line-join': 'round',
-                                'line-cap': 'round',
-                                'visibility': activeRoute === 'recommended' ? 'visible' : 'none'
-                            },
-                            paint: {
-                                'line-color': '#2D5A27',
-                                'line-width': 6,
-                                'line-opacity': 0.8
-                            }
-                        });
-
-                        // Initial fit bounds
-                        const bounds = new mapboxgl.LngLatBounds();
-                        if (activeRoute === 'recommended') {
-                            route.geometry.coordinates.forEach((c: [number, number]) => bounds.extend(c));
-                            mapRef.current.fitBounds(bounds, { padding: 50 });
-                        } else if (activeRoute === 'sasayama-main' && courseData) {
-                            courseData.features[0].geometry.coordinates.forEach((c: any) => bounds.extend(c as [number, number]));
-                            mapRef.current.fitBounds(bounds, { padding: 50 });
+                    // Jokamachi Area
+                    map.addSource('area-jokamachi', {
+                        type: 'geojson',
+                        data: {
+                            type: 'Feature',
+                            properties: { title: '城下町エリア' },
+                            geometry: { type: 'Polygon', coordinates: [jokamachiPoly] }
                         }
+                    });
+                    map.addLayer({
+                        id: 'area-jokamachi-fill',
+                        type: 'fill',
+                        source: 'area-jokamachi',
+                        paint: { 'fill-color': '#800000', 'fill-opacity': 0.2 }
+                    });
 
-                    } catch (e) {
-                        console.error('Failed to fetch route:', e);
-                    }
+                    // Interactions (Popup & FlyTo)
+                    const showPopup = (e: any) => {
+                        const description = e.features[0].properties.title;
+                        new mapboxgl.Popup()
+                            .setLngLat(e.lngLat)
+                            .setHTML(`<div class="px-2 py-1 text-sm font-bold text-satoyama-forest">${description}</div>`)
+                            .addTo(map);
+                    };
+
+                    ['area-station-fill', 'area-jokamachi-fill'].forEach(layer => {
+                        map.on('mousemove', layer, (e) => {
+                            map.getCanvas().style.cursor = 'pointer';
+                            showPopup(e);
+                        });
+                        map.on('mouseleave', layer, () => {
+                            map.getCanvas().style.cursor = '';
+                        });
+                        map.on('click', layer, (e) => {
+                            map.flyTo({ center: e.lngLat, zoom: 15, duration: 1500 });
+                        });
+                    });
+
+                    // Markers for standard locations
+                    locationData.features.forEach((feature: any) => {
+                        const coords = feature.geometry.coordinates as [number, number];
+                        new mapboxgl.Marker({ color: '#2D5A27' })
+                            .setLngLat(coords)
+                            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<h3>${feature.properties.name}</h3><p>${feature.properties.description}</p>`))
+                            .addTo(map);
+                    });
                 });
+
             } catch (e) {
                 console.error('Failed to initialize Mapbox:', e);
-                setError('Failed to initialize the map. Please check the browser console for details.');
+                setError('Failed to initialize map.');
             }
         }
 
@@ -190,76 +187,45 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
         };
     }, []);
 
-    // Handle visibility and bounds when switching routes
+    // Handle Route Changes
     useEffect(() => {
         if (!mapRef.current) return;
         const map = mapRef.current;
-        const dynamicLayer = 'cycling-route-line';
 
-        const updateVisibility = () => {
-            // 1. Toggle Markers (only for Recommended)
-            const showMarkers = activeRoute === 'recommended';
-            markersRef.current.forEach(marker => {
-                const el = marker.getElement();
-                if (el) el.style.display = showMarkers ? 'block' : 'none';
+        const targetRoute = explorationRoutes.find(r => r.id === activeRoute);
+        if (targetRoute) {
+            map.flyTo({
+                center: targetRoute.startPoint,
+                zoom: 14,
+                duration: 2000
             });
-
-            // 2. Toggle Dynamic Route line
-            if (map.getLayer(dynamicLayer)) {
-                map.setLayoutProperty(
-                    dynamicLayer,
-                    'visibility',
-                    showMarkers ? 'visible' : 'none'
-                );
-            }
-
-            // 3. Fit bounds to the selected route
-            const bounds = new mapboxgl.LngLatBounds();
-            if (activeRoute === 'recommended') {
-                const source = map.getSource('cycling-route') as any;
-                if (source && source._data && source._data.geometry) {
-                    source._data.geometry.coordinates.forEach((c: [number, number]) => bounds.extend(c));
-                    map.fitBounds(bounds, { padding: 50 });
-                }
-            } else if (activeRoute === 'sasayama-main' && courseData) {
-                // Show GPX Layer visibility is handled by GpxRouteLayer component
-                courseData.features[0].geometry.coordinates.forEach((c: any) => bounds.extend(c as [number, number]));
-                map.fitBounds(bounds, { padding: 50 });
-            }
-        };
-
-        if (map.isStyleLoaded()) {
-            updateVisibility();
-        } else {
-            map.on('load', updateVisibility);
         }
     }, [activeRoute]);
 
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center w-full h-full bg-red-50 p-8 text-center">
-                <div className="text-red-600 text-4xl mb-4">⚠️</div>
-                <h2 className="text-xl font-bold text-red-800 mb-2">Map Error</h2>
-                <p className="text-red-700 max-w-md">{error}</p>
-                <div className="mt-6 p-4 bg-white rounded border border-red-200 text-sm text-left">
-                    <p className="font-semibold mb-1">Troubleshooting:</p>
-                    <ul className="list-disc ml-5 space-y-1">
-                        <li>Check if <code>VITE_MAPBOX_ACCESS_TOKEN</code> is set in Vercel.</li>
-                        <li>Ensure the token starts with <code>pk.</code></li>
-                        <li>Check the browser console (F12) for more specific errors.</li>
-                    </ul>
-                </div>
-            </div>
-        );
-    }
+    const toggle3D = () => {
+        if (!mapRef.current) return;
+        const targetPitch = is3D ? 0 : 60;
+        mapRef.current.easeTo({ pitch: targetPitch, duration: 1000 });
+        setIs3D(!is3D);
+    };
+
+    if (error) return <div className="text-red-500 p-4">{error}</div>;
 
     return (
         <div className="w-full h-full relative">
-            <div
-                ref={mapContainerRef}
-                className="w-full h-full min-h-[400px]"
-                style={{ position: 'absolute', top: 0, bottom: 0, width: '100%' }}
-            />
+            <div ref={mapContainerRef} className="w-full h-full" />
+
+            {/* 5. 3D View Toggle Button */}
+            <div className="absolute top-24 right-2.5 z-10">
+                <button
+                    onClick={toggle3D}
+                    className="bg-[#F4F1E8] p-2 rounded-md shadow-md border border-[#2D5A27]/20 hover:bg-white transition-colors"
+                    title={is3D ? "2D View" : "3D View"}
+                >
+                    <span className="text-xl font-bold text-[#2D5A27]">{is3D ? "2D" : "3D"}</span>
+                </button>
+            </div>
+
             {mapInstance && <GpxRouteLayer map={mapInstance} isVisible={activeRoute === 'sasayama-main'} />}
         </div>
     );
