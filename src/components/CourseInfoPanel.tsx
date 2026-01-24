@@ -95,6 +95,14 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulat
 
                     {route.category === 'route' && (
                         <div className="space-y-3">
+                            {/* Primary Action: Select Route (Collapse Panel for Riding) */}
+                            <button
+                                onClick={() => setIsExpanded(false)}
+                                className="w-full py-3 bg-satoyama-forest text-white rounded-lg font-bold text-lg shadow-md hover:bg-[#1a3815] transition-colors flex items-center justify-center gap-2 mb-2"
+                            >
+                                <span>🚲</span> このルートを選ぶ
+                            </button>
+
                             {/* Simulation Controls */}
                             <div className="border-t border-dashed border-satoyama-leaf/30 pt-3">
                                 <div className="flex items-center justify-between text-xs font-bold text-satoyama-leaf mb-2">
