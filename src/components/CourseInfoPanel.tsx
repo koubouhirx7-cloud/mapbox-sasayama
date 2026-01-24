@@ -57,10 +57,21 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulat
                             </svg>
                         )}
                     </button>
-                    {!isExpanded && (
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm text-sm
-                            ${route.category === 'route' ? 'bg-[#2D5A27]' : 'bg-[#800000]'}`}>
-                            {route.category === 'route' ? '🚲' : '🗺️'}
+                    {!isExpanded && route.category === 'route' && (
+                        <div className="flex gap-2 animate-fadeIn">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onStartSimulation();
+                                }}
+                                className={`px-4 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase shadow-sm transition-colors flex items-center gap-1
+                                    ${isSimulating
+                                        ? 'bg-red-500 text-white hover:bg-red-600'
+                                        : 'bg-satoyama-forest text-white hover:bg-[#1a3815]'
+                                    }`}
+                            >
+                                {isSimulating ? '⏹ Stop' : '▶ Start'}
+                            </button>
                         </div>
                     )}
                 </div>
