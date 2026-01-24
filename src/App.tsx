@@ -14,7 +14,7 @@ function App() {
                     Cycle through Tanba-Sasayama
                 </div>
             </header>
-            <main className="flex-grow relative">
+            <main className="relative flex-grow">
                 <Map />
             </main>
         </div>
