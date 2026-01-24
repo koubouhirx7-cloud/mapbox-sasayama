@@ -15,6 +15,7 @@ interface MapProps {
 const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
+    const markersRef = useRef<mapboxgl.Marker[]>([]);
     const [error, setError] = React.useState<string | null>(null);
     const [mapInstance, setMapInstance] = React.useState<mapboxgl.Map | null>(null);
 
@@ -63,7 +64,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
                 // Add Markers
                 locationData.features.forEach((feature: any) => {
                     const coords = feature.geometry.coordinates as [number, number];
-                    new mapboxgl.Marker({ color: '#2D5A27' })
+                    const marker = new mapboxgl.Marker({ color: '#2D5A27' })
                         .setLngLat(coords)
                         .setPopup(
                             new mapboxgl.Popup({
@@ -87,6 +88,8 @@ const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
                                 `)
                         )
                         .addTo(mapRef.current!);
+
+                    markersRef.current.push(marker);
                 });
 
                 // Add Route Line
@@ -119,7 +122,8 @@ const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
                             source: 'cycling-route',
                             layout: {
                                 'line-join': 'round',
-                                'line-cap': 'round'
+                                'line-cap': 'round',
+                                'visibility': activeRoute === 'recommended' ? 'visible' : 'none'
                             },
                             paint: {
                                 'line-color': '#2D5A27',
@@ -128,15 +132,15 @@ const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
                             }
                         });
 
-                        // Fit map to route & course
+                        // Initial fit bounds
                         const bounds = new mapboxgl.LngLatBounds();
-                        route.geometry.coordinates.forEach((c: [number, number]) => bounds.extend(c));
-
-                        if (courseData && courseData.features && courseData.features[0].geometry.coordinates) {
+                        if (activeRoute === 'recommended') {
+                            route.geometry.coordinates.forEach((c: [number, number]) => bounds.extend(c));
+                            mapRef.current.fitBounds(bounds, { padding: 50 });
+                        } else if (courseData) {
                             courseData.features[0].geometry.coordinates.forEach((c: any) => bounds.extend(c as [number, number]));
+                            mapRef.current.fitBounds(bounds, { padding: 50 });
                         }
-
-                        mapRef.current.fitBounds(bounds, { padding: 50 });
 
                     } catch (e) {
                         console.error('Failed to fetch route:', e);
@@ -163,7 +167,14 @@ const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
         const dynamicLayer = 'cycling-route-line';
 
         const updateVisibility = () => {
-            // Toggle Dynamic Route visibility
+            // 1. Toggle Markers
+            const showMarkers = activeRoute === 'recommended';
+            markersRef.current.forEach(marker => {
+                const el = marker.getElement();
+                if (el) el.style.display = showMarkers ? 'block' : 'none';
+            });
+
+            // 2. Toggle Dynamic Route line
             if (map.getLayer(dynamicLayer)) {
                 map.setLayoutProperty(
                     dynamicLayer,
@@ -172,7 +183,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
                 );
             }
 
-            // Fit bounds to the selected route
+            // 3. Fit bounds to the selected route
             const bounds = new mapboxgl.LngLatBounds();
             if (activeRoute === 'recommended') {
                 const source = map.getSource('cycling-route') as any;
