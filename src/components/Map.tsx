@@ -9,13 +9,15 @@ const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
 
 interface MapProps {
     onStepsChange?: (steps: any[]) => void;
+    onProximityChange?: (step: any, distance: number | null) => void;
     activeRoute: 'recommended' | 'gpx';
 }
 
-const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
+const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, activeRoute }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const markersRef = useRef<mapboxgl.Marker[]>([]);
+    const routeStepsRef = useRef<any[]>([]);
     const [error, setError] = React.useState<string | null>(null);
     const [mapInstance, setMapInstance] = React.useState<mapboxgl.Map | null>(null);
 
@@ -50,16 +52,38 @@ const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
                 mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
                 // Add Geolocation control
-                mapRef.current.addControl(
-                    new mapboxgl.GeolocateControl({
-                        positionOptions: {
-                            enableHighAccuracy: true
-                        },
-                        trackUserLocation: true,
-                        showUserHeading: true
-                    }),
-                    'top-right'
-                );
+                const geolocate = new mapboxgl.GeolocateControl({
+                    positionOptions: {
+                        enableHighAccuracy: true
+                    },
+                    trackUserLocation: true,
+                    showUserHeading: true
+                });
+                mapRef.current.addControl(geolocate, 'top-right');
+
+                // Proximity Detection logic
+                geolocate.on('geolocate', (position: any) => {
+                    if (!onProximityChange || activeRoute !== 'recommended') return;
+
+                    const userCoords = new mapboxgl.LngLat(position.coords.longitude, position.coords.latitude);
+                    let closestStep = null;
+                    let minDistance = Infinity;
+
+                    routeStepsRef.current.forEach(step => {
+                        const stepCoords = new mapboxgl.LngLat(step.maneuver.location[0], step.maneuver.location[1]);
+                        const distance = userCoords.distanceTo(stepCoords);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestStep = step;
+                        }
+                    });
+
+                    if (minDistance < 200 && closestStep) {
+                        onProximityChange(closestStep, minDistance);
+                    } else {
+                        onProximityChange(null, null);
+                    }
+                });
 
                 // Add Markers
                 locationData.features.forEach((feature: any) => {
@@ -106,6 +130,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
                         if (onStepsChange) {
                             onStepsChange(route.legs[0].steps);
                         }
+                        routeStepsRef.current = route.legs[0].steps;
 
                         mapRef.current.addSource('cycling-route', {
                             type: 'geojson',
