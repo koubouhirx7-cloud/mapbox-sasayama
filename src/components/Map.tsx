@@ -125,6 +125,17 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                         if (cb) cb(position.coords.latitude, position.coords.longitude);
                     });
 
+                    geolocate.on('error', (e: any) => {
+                        console.error('Geolocate error:', e);
+                        if (e.code === 1) {
+                            alert('位置情報の利用が許可されていません。端末の設定で位置情報をオンにしてください。');
+                        } else if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                            alert('セキュリティ制約のため、位置情報はHTTPS接続（またはlocalhost）でのみ利用可能です。');
+                        } else {
+                            alert('現在地を取得できませんでした。電波の良い場所で再度お試しください。');
+                        }
+                    });
+
                     // Auto-start Ride Mode
                     const searchParams = new URLSearchParams(window.location.search);
                     if (searchParams.get('mode') === 'ride') {
@@ -132,6 +143,9 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                         setTimeout(() => {
                             map.setPitch(60); // Tilt for 3D/Heading up view
                             setIs3D(true);    // Sync UI state
+
+                            // Check explicit permission state if usage relies on it, 
+                            // but trigger() handles the prompt.
                             geolocate.trigger();
                         }, 1000);
                     }

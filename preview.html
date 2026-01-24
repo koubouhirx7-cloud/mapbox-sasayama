@@ -155,11 +155,24 @@
 
         // Add controls
         map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-        map.addControl(new mapboxgl.GeolocateControl({
+
+        const geolocate = new mapboxgl.GeolocateControl({
             positionOptions: { enableHighAccuracy: true },
             trackUserLocation: true,
             showUserHeading: true
-        }), 'top-right');
+        });
+        map.addControl(geolocate, 'top-right');
+
+        geolocate.on('error', (e) => {
+            console.error('Geolocate error:', e);
+            if (e.code === 1) {
+                alert('位置情報の利用が許可されていません。設定をご確認ください。');
+            } else if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                alert('HTTPS接続が必要です。');
+            } else {
+                alert('位置情報を取得できませんでした。');
+            }
+        });
 
         // Add Markers with rich popups
         locationsGeoJSON.features.forEach((feature) => {
