@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { useTextToSpeech } from './useTextToSpeech';
+import { playChime } from '../utils/audio';
 
 interface NavigationState {
     currentStep: any | null;
@@ -18,8 +18,6 @@ export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true)
         currentInstruction: null,
         isNavigating: false,
     });
-
-    const { speak } = useTextToSpeech();
 
     const lastUserLocation = useRef<{ lat: number, lng: number, timestamp: number } | null>(null);
     const lastAnnouncedStepIndex = useRef<number>(-1);
@@ -116,7 +114,7 @@ export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true)
 
     const startNavigation = () => {
         console.log("Starting Navigation");
-        if (isVoiceEnabled) speak("案内を開始します。安全運転で走行してください。");
+        if (isVoiceEnabled) playChime(); // Initial confirmation
         lastAnnouncedStepIndex.current = -1;
         setState(prev => ({ ...prev, isNavigating: true }));
     };
