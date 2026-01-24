@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green-Gear Navigation - Preview</title>
+    <!-- Mapbox GL JS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        satoyama: {
+                            forest: '#2D5A27',
+                            soil: '#4A3728',
+                            leaf: '#879166',
+                            mist: '#F4F1E8',
+                            accent: '#D4A373',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        /* Mapbox Popup Customization to match theme */
+        .mapboxgl-popup-content {
+            padding: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .mapboxgl-popup-tip {
+            border-top-color: #2D5A27 !important;
+        }
+
+        .mapboxgl-popup-close-button {
+            color: white !important;
+            font-size: 16px !important;
+            padding: 4px 8px !important;
+            top: 2px !important;
+            right: 2px !important;
+        }
+
+        .mapboxgl-ctrl-group {
+            background-color: #F4F1E8 !important;
+            border: 1px solid rgba(45, 90, 39, 0.2) !important;
+        }
+    </style>
+</head>
+
+<body class="bg-satoyama-mist flex flex-col h-screen overflow-hidden">
+
+    <header class="bg-satoyama-forest text-satoyama-mist py-4 px-6 shadow-lg z-20 flex items-center justify-between">
+        <div>
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                <span
+                    class="w-8 h-8 bg-satoyama-mist rounded-lg flex items-center justify-center text-satoyama-forest text-lg">🚲</span>
+                Green-Gear Navigation
+            </h1>
+        </div>
+        <div class="hidden md:block text-sm font-medium opacity-80">
+            Cycle through Tanba-Sasayama
+        </div>
+    </header>
+
+    <main class="flex-grow relative">
+        <div id="map"></div>
+    </main>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaGlnaGxhbmRlcjIiLCJhIjoiY21rcXUxc2JqMHcyYTNjcTA5ZmV2NnR5NSJ9.Pgi2sa3jRDZx2Ua8M21Iqg';
+
+        const HIGHLANDER_COORDS = [135.164515, 35.062031];
+
+        const locationsGeoJSON = {
+            type: 'FeatureCollection',
+            features: [
+                {
+                    type: 'Feature',
+                    properties: {
+                        name: 'ハイランダー（拠点）',
+                        description: '丹波篠山市の里山自転車店。サイクリングの拠点です。'
+                    },
+                    geometry: { type: 'Point', coordinates: [135.164515, 35.062031] }
+                },
+                {
+                    type: 'Feature',
+                    properties: {
+                        name: '味間奥の茶畑',
+                        description: '大国寺周辺に広がる美しい茶畑景観。'
+                    },
+                    geometry: { type: 'Point', coordinates: [135.160397, 35.068165] }
+                },
+                {
+                    type: 'Feature',
+                    properties: {
+                        name: '茶の里会館周辺',
+                        description: '丹波篠山茶の歴史を感じるエリア。'
+                    },
+                    geometry: { type: 'Point', coordinates: [135.148337, 35.064192] }
+                },
+                {
+                    type: 'Feature',
+                    properties: {
+                        name: '味間南の茶畑',
+                        description: 'ハイランダー近くののどかな茶畑。'
+                    },
+                    geometry: { type: 'Point', coordinates: [135.166, 35.063] }
+                }
+            ]
+        };
+
+        const routeGeoJSON = {
+            type: 'FeatureCollection',
+            features: [
+                {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: [
+                            [135.164515, 35.062031],
+                            [135.166, 35.063],
+                            [135.160397, 35.068165],
+                            [135.148337, 35.064192]
+                        ]
+                    }
+                }
+            ]
+        };
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/outdoors-v12',
+            center: HIGHLANDER_COORDS,
+            zoom: 15
+        });
+
+        // Add controls
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        map.addControl(new mapboxgl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: true },
+            trackUserLocation: true,
+            showUserHeading: true
+        }), 'top-right');
+
+        // Add Markers with rich popups
+        locationsGeoJSON.features.forEach((feature) => {
+            const popupHTML = `
+                <div class="overflow-hidden rounded-lg shadow-sm border border-[#2D5A27]/20 bg-[#F4F1E8]">
+                    <div class="bg-[#2D5A27] px-3 py-2">
+                        <h3 class="font-bold text-white text-sm m-0 tracking-wide">${feature.properties.name}</h3>
+                    </div>
+                    <div class="p-3">
+                        <p class="text-xs leading-relaxed text-[#4A3728] mb-2">${feature.properties.description}</p>
+                        <div class="flex items-center gap-1.5 pt-2 border-t border-[#879166]/30">
+                            <span class="w-2 h-2 rounded-full bg-[#879166]"></span>
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-[#2D5A27]">Green-Gear ポイント</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            new mapboxgl.Marker({ color: '#2D5A27' })
+                .setLngLat(feature.geometry.coordinates)
+                .setPopup(new mapboxgl.Popup({ offset: 30, maxWidth: '280px' }).setHTML(popupHTML))
+                .addTo(map);
+        });
+
+        map.on('load', () => {
+            map.addSource('cycling-route', {
+                type: 'geojson',
+                data: routeGeoJSON
+            });
+
+            map.addLayer({
+                id: 'cycling-route-line',
+                type: 'line',
+                source: 'cycling-route',
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: {
+                    'line-color': '#2D5A27',
+                    'line-width': 5,
+                    'line-opacity': 0.7
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
