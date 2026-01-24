@@ -47,6 +47,9 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
     const onStepsChangeRef = useRef(onStepsChange);
     const onRouteLoadedRef = useRef(onRouteLoaded);
 
+    // Track initial zoom for simulation
+    const hasInitialZoomedRef = useRef(false);
+
     useEffect(() => {
         onUserLocationChangeRef.current = onUserLocationChange;
         onStepsChangeRef.current = onStepsChange;
@@ -436,16 +439,24 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
 
             // Camera follow with easing
             // Enforce North Up (bearing 0) and 45-degree pitch as per user request
-            // Zoom: User requested ~200m scale (approx zoom 16.5)
-            mapRef.current.easeTo({
+            const cameraOptions: any = {
                 center: [simulatedLocation.lng, simulatedLocation.lat],
                 pitch: 45,
                 bearing: 0,
-                zoom: 16.5,
                 duration: 100, // Short duration for smooth continuous update
                 easing: (t) => t
-            });
+            };
+
+            // Only force zoom on the first frame of simulation to allow manual zoom (scale change) afterwards
+            // User requested "Swipe to change scale" (Manual Zoom)
+            if (!hasInitialZoomedRef.current) {
+                cameraOptions.zoom = 16.5; // Initial "Zoom up"
+                hasInitialZoomedRef.current = true;
+            }
+
+            mapRef.current.easeTo(cameraOptions);
         } else {
+            hasInitialZoomedRef.current = false; // Reset for next run
             if (simulationMarkerRef.current) {
                 simulationMarkerRef.current.remove();
                 simulationMarkerRef.current = null;
