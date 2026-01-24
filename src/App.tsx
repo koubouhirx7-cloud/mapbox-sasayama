@@ -115,24 +115,54 @@ function App() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto py-6 px-4">
-                    <h2 className="text-xs uppercase tracking-widest text-satoyama-leaf font-bold mb-4 px-2">エリア選択</h2>
-                    <div className="space-y-3">
-                        {explorationRoutes.map((route) => (
-                            <button
-                                key={route.id}
-                                onClick={() => {
-                                    setActiveRoute(route.id);
-                                    setIsSidebarOpen(false); // Auto-close on mobile
-                                }}
-                                className={`w-full text-left px-4 py-4 rounded-lg transition-all duration-200 flex items-center gap-3 group min-h-[50px]
-                                    ${activeRoute === route.id
-                                        ? 'bg-white text-satoyama-forest shadow-md font-bold ring-1 ring-white'
-                                        : 'hover:bg-satoyama-leaf/20 text-satoyama-mist'}`}
-                            >
-                                <span className={`w-3 h-3 rounded-full flex-shrink-0 transition-colors ${activeRoute === route.id ? 'bg-satoyama-forest' : 'bg-satoyama-leaf'}`}></span>
-                                <span className="text-base">{route.name}</span>
-                            </button>
-                        ))}
+                    {/* Cycling Courses Section */}
+                    <div className="mb-8">
+                        <h2 className="text-xs uppercase tracking-widest text-satoyama-leaf font-bold mb-3 px-2 flex items-center gap-2">
+                            <span className="text-lg">🚲</span> サイクリングコース
+                        </h2>
+                        <div className="space-y-3">
+                            {explorationRoutes.filter(r => r.category === 'route').map((route) => (
+                                <button
+                                    key={route.id}
+                                    onClick={() => {
+                                        setActiveRoute(route.id);
+                                        setIsSidebarOpen(false);
+                                    }}
+                                    className={`w-full text-left px-4 py-4 rounded-lg transition-all duration-200 flex items-center gap-3 group min-h-[50px]
+                                        ${activeRoute === route.id
+                                            ? 'bg-white text-satoyama-forest shadow-md font-bold ring-1 ring-white'
+                                            : 'hover:bg-satoyama-leaf/20 text-satoyama-mist'}`}
+                                >
+                                    <span className={`w-3 h-3 rounded-full flex-shrink-0 transition-colors ${activeRoute === route.id ? 'bg-satoyama-forest' : 'bg-satoyama-leaf'}`}></span>
+                                    <span className="text-base leading-tight">{route.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Area Guides Section */}
+                    <div>
+                        <h2 className="text-xs uppercase tracking-widest text-satoyama-leaf font-bold mb-3 px-2 flex items-center gap-2">
+                            <span className="text-lg">🗺️</span> エリアガイド
+                        </h2>
+                        <div className="space-y-3">
+                            {explorationRoutes.filter(r => r.category === 'area').map((route) => (
+                                <button
+                                    key={route.id}
+                                    onClick={() => {
+                                        setActiveRoute(route.id);
+                                        setIsSidebarOpen(false);
+                                    }}
+                                    className={`w-full text-left px-4 py-4 rounded-lg transition-all duration-200 flex items-center gap-3 group min-h-[50px]
+                                        ${activeRoute === route.id
+                                            ? 'bg-white text-satoyama-forest shadow-md font-bold ring-1 ring-white'
+                                            : 'hover:bg-satoyama-leaf/20 text-satoyama-mist'}`}
+                                >
+                                    <span className={`w-3 h-3 rounded-full flex-shrink-0 transition-colors ${activeRoute === route.id ? 'bg-satoyama-forest' : 'bg-satoyama-leaf'}`}></span>
+                                    <span className="text-base leading-tight">{route.name}</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 

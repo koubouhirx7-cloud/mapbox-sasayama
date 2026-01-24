@@ -231,115 +231,117 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
         };
     }, []);
 
+    const targetRoute = explorationRoutes.find(r => r.id === activeRoute);
+
     // Handle Route Changes & Fetch Directions
     useEffect(() => {
-        if (!mapRef.current) return;
+        if (!mapRef.current || !targetRoute) return;
         const map = mapRef.current;
 
-        const targetRoute = explorationRoutes.find(r => r.id === activeRoute);
-        if (targetRoute) {
-            map.flyTo({
-                center: targetRoute.startPoint,
-                zoom: 14,
-                duration: 2000
-            });
+        // Fly to start point
+        map.flyTo({
+            center: targetRoute.startPoint,
+            zoom: 14,
+            duration: 2000
+        });
 
-            // Fetch Turn-by-Turn Directions
-            const loadRoute = async () => {
-                try {
-                    // Sample coordinates from courseData to force the route match
-                    // This ensures the API returns instructions for THIS specific path
-                    const rawCoords = courseData.features[0].geometry.coordinates;
-                    const waypoints: [number, number][] = [];
+        // Fetch Turn-by-Turn Directions
+        const loadRoute = async () => {
+            try {
+                if (!targetRoute.data) return;
 
-                    // Add Start
-                    waypoints.push(rawCoords[0] as [number, number]);
+                // Sample coordinates from route data to force the route match
+                // This ensures the API returns instructions for THIS specific path
+                const rawCoords = targetRoute.data.features[0].geometry.coordinates;
+                const waypoints: [number, number][] = [];
 
-                    // Add intermediates (every 20th point to stay under URL limit but define shape)
-                    // The Mapbox Directions API supports up to 25 coordinates
-                    const step = Math.ceil(rawCoords.length / 23);
-                    for (let i = step; i < rawCoords.length - 1; i += step) {
-                        waypoints.push(rawCoords[i] as [number, number]);
-                    }
+                // Add Start
+                waypoints.push(rawCoords[0] as [number, number]);
 
-                    // Add End
-                    waypoints.push(rawCoords[rawCoords.length - 1] as [number, number]);
-
-                    const data = await fetchDirections(waypoints);
-
-                    if (data.routes && data.routes.length > 0) {
-                        const route = data.routes[0];
-                        const cb = onStepsChangeRef.current;
-                        if (cb) {
-                            // Extract steps from all legs
-                            // Filter out intermediate "Arrive" steps (waypoints) to prevent falsely announcing destination at every sample point
-                            const rawSteps = route.legs.flatMap((leg: any) => leg.steps);
-                            // 1. Filter out specific "Arrive" steps
-                            const filteredSteps = rawSteps.filter((step: any) => {
-                                return step.maneuver.type !== 'arrive';
-                            });
-
-                            // 2. Sanitize text in remaining steps to remove "destination" mentions
-                            // (e.g. "Right turn, then you will arrive at destination")
-                            const allSteps = filteredSteps.map((step: any) => {
-                                const cleanText = (text: string) => {
-                                    if (!text) return text;
-
-                                    // Remove destination references first (Aggressive removal of clauses)
-                                    let cleaned = text
-                                        // Japanese Patterns: Remove entire clauses
-                                        .replace(/目的地は.*(あります|です)/g, '')   // "目的地は右側にあります" -> ""
-                                        .replace(/まもなく目的地.*(です|ます)/g, '')   // "まもなく目的地周辺です" -> ""
-                                        .replace(/(そして)?目的地に到着(します|です|しました)?/g, '') // "目的地に到着します" -> ""
-
-                                        // English Patterns
-                                        .replace(/(and )?you will arrive at your destination/gi, '')
-                                        .replace(/the destination is on your (left|right)/gi, '')
-                                        .replace(/, then you will arrive/gi, '')
-
-                                        // Fallbacks
-                                        .replace(/目的地/g, '')
-                                        .trim();
-
-                                    // Cleanup leading/trailing punctuation left behind
-                                    cleaned = cleaned.replace(/^[、。,]\s*/, '');
-
-                                    // Fix Japanese conjugation at the end of the sentence
-                                    // e.g., "右折して、" -> "右折します" (because "目的地..." was removed after it)
-                                    if (cleaned.endsWith('して、') || cleaned.endsWith('して')) {
-                                        cleaned = cleaned.replace(/して、?$/, 'します');
-                                    }
-
-                                    // Remove trailing punctuation
-                                    cleaned = cleaned.replace(/[、,]\s*$/, '');
-
-                                    return cleaned;
-                                };
-
-                                const newStep = { ...step };
-                                newStep.maneuver = { ...step.maneuver, instruction: cleanText(newStep.maneuver.instruction) };
-
-                                if (newStep.voiceInstructions) {
-                                    newStep.voiceInstructions = newStep.voiceInstructions.map((v: any) => ({
-                                        ...v,
-                                        announcement: cleanText(v.announcement)
-                                    }));
-                                }
-                                return newStep;
-                            });
-
-                            cb(allSteps);
-                        }
-                        // removed onRouteLoaded call to keep simulation on the GPX trace
-                    }
-                } catch (err) {
-                    console.error("Failed to load directions:", err);
+                // Add intermediates (every 20th point to stay under URL limit but define shape)
+                // The Mapbox Directions API supports up to 25 coordinates
+                const step = Math.ceil(rawCoords.length / 23);
+                for (let i = step; i < rawCoords.length - 1; i += step) {
+                    waypoints.push(rawCoords[i] as [number, number]);
                 }
-            };
 
-            loadRoute();
-        }
-    }, [activeRoute]);
+                // Add End
+                waypoints.push(rawCoords[rawCoords.length - 1] as [number, number]);
+
+                const data = await fetchDirections(waypoints);
+
+                if (data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    const cb = onStepsChangeRef.current;
+                    if (cb) {
+                        // Extract steps from all legs
+                        // Filter out intermediate "Arrive" steps (waypoints) to prevent falsely announcing destination at every sample point
+                        const rawSteps = route.legs.flatMap((leg: any) => leg.steps);
+                        // 1. Filter out specific "Arrive" steps
+                        const filteredSteps = rawSteps.filter((step: any) => {
+                            return step.maneuver.type !== 'arrive';
+                        });
+
+                        // 2. Sanitize text in remaining steps to remove "destination" mentions
+                        // (e.g. "Right turn, then you will arrive at destination")
+                        const allSteps = filteredSteps.map((step: any) => {
+                            const cleanText = (text: string) => {
+                                if (!text) return text;
+
+                                // Remove destination references first (Aggressive removal of clauses)
+                                let cleaned = text
+                                    // Japanese Patterns: Remove entire clauses
+                                    .replace(/目的地は.*(あります|です)/g, '')   // "目的地は右側にあります" -> ""
+                                    .replace(/まもなく目的地.*(です|ます)/g, '')   // "まもなく目的地周辺です" -> ""
+                                    .replace(/(そして)?目的地に到着(します|です|しました)?/g, '') // "目的地に到着します" -> ""
+
+                                    // English Patterns
+                                    .replace(/(and )?you will arrive at your destination/gi, '')
+                                    .replace(/the destination is on your (left|right)/gi, '')
+                                    .replace(/, then you will arrive/gi, '')
+
+                                    // Fallbacks
+                                    .replace(/目的地/g, '')
+                                    .trim();
+
+                                // Cleanup leading/trailing punctuation left behind
+                                cleaned = cleaned.replace(/^[、。,]\s*/, '');
+
+                                // Fix Japanese conjugation at the end of the sentence
+                                // e.g., "右折して、" -> "右折します" (because "目的地..." was removed after it)
+                                if (cleaned.endsWith('して、') || cleaned.endsWith('して')) {
+                                    cleaned = cleaned.replace(/して、?$/, 'します');
+                                }
+
+                                // Remove trailing punctuation
+                                cleaned = cleaned.replace(/[、,]\s*$/, '');
+
+                                return cleaned;
+                            };
+
+                            const newStep = { ...step };
+                            newStep.maneuver = { ...step.maneuver, instruction: cleanText(newStep.maneuver.instruction) };
+
+                            if (newStep.voiceInstructions) {
+                                newStep.voiceInstructions = newStep.voiceInstructions.map((v: any) => ({
+                                    ...v,
+                                    announcement: cleanText(v.announcement)
+                                }));
+                            }
+                            return newStep;
+                        });
+
+                        cb(allSteps);
+                    }
+                    // removed onRouteLoaded call to keep simulation on the GPX trace
+                }
+            } catch (err) {
+                console.error("Failed to load directions:", err);
+            }
+        };
+
+        loadRoute();
+    }, [activeRoute, targetRoute]);
 
     const toggle3D = () => {
         if (!mapRef.current) return;
@@ -404,11 +406,12 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                 </button>
             </div>
 
-            {mapInstance && (
+            {mapInstance && targetRoute?.data && (
                 <GpxRouteLayer
                     map={mapInstance}
-                    isVisible={activeRoute === 'sasayama-main'}
+                    isVisible={targetRoute.category === 'route'}
                     onRouteLoaded={onRouteLoaded}
+                    routeData={targetRoute.data}
                 />
             )}
         </div>

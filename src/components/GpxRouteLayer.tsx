@@ -1,22 +1,22 @@
 import React, { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import courseData from '../data/course.json';
 
 interface GpxRouteLayerProps {
     map: mapboxgl.Map;
     isVisible: boolean;
     onRouteLoaded?: (route: any) => void;
+    routeData: any;
 }
 
-const GpxRouteLayer: React.FC<GpxRouteLayerProps> = ({ map, isVisible, onRouteLoaded }) => {
+const GpxRouteLayer: React.FC<GpxRouteLayerProps> = ({ map, isVisible, onRouteLoaded, routeData }) => {
     const animationRef = useRef<number>();
 
     useEffect(() => {
-        if (!map) return;
+        if (!map || !routeData) return;
 
         // Pass route data up
-        if (onRouteLoaded) {
-            onRouteLoaded(courseData.features[0]);
+        if (onRouteLoaded && routeData.features && routeData.features.length > 0) {
+            onRouteLoaded(routeData.features[0]);
         }
 
         // Toggle visibility immediately if layers exist
@@ -28,16 +28,36 @@ const GpxRouteLayer: React.FC<GpxRouteLayerProps> = ({ map, isVisible, onRouteLo
         });
 
         const addLayers = () => {
-            if (map.getSource('gpx-route')) return;
+            if (map.getSource('gpx-route')) {
+                // If source exists, update data
+                (map.getSource('gpx-route') as mapboxgl.GeoJSONSource).setData(routeData as any); // Use processed data below actually
+                // But wait, the below logic recalculates 'features' with slope categorization.
+                // We should re-run the processing logic if data changes.
+                // For simplicity, let's remove source if data changed? Or just update.
+                // The current logic adds source once.
+                // Let's allow re-running if we make the Source ID unique or just update the data.
+                // Actually, the component unmounts/remounts logic is handled by "return () => cleanup".
+                // But if activeRoute changes, the component might stay mounted if it's the same component.
+                // In Map.tsx, <GpxRouteLayer ... /> is rendered conditionally?
+                // No, "isVisible" changes.
+                // But if we switch routes, "activeRoute" changes, so "routeData" changes.
+                // We need to remove old source and add new one.
+                // The cleanup function removes it. So if routeData changes, this useEffect runs again.
+                // Perfect.
+            }
+            if (map.getSource('gpx-route')) return; // Safety check if cleanup failed or race condition
 
             // 1. Process courseData for elevation segments
             const features: any[] = [];
-            const coords = courseData.features[0].geometry.coordinates;
+            // Ensure data structure
+            if (!routeData.features || !routeData.features[0]) return;
+
+            const coords = routeData.features[0].geometry.coordinates;
 
             for (let i = 0; i < coords.length - 1; i++) {
                 const p1 = coords[i];
                 const p2 = coords[i + 1];
-                const dEle = p2[2] - p1[2];
+                const dEle = (p2[2] || 0) - (p1[2] || 0); // Handle missing elevation
                 const dist = Math.sqrt(Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1] - p1[1], 2));
                 const slope = dist > 0 ? dEle / (dist * 111000) : 0;
 
@@ -134,7 +154,7 @@ const GpxRouteLayer: React.FC<GpxRouteLayerProps> = ({ map, isVisible, onRouteLo
             });
             if (map.getSource('gpx-route')) map.removeSource('gpx-route');
         };
-    }, [map, isVisible]);
+    }, [map, isVisible, routeData]); // Added routeData dependency
 
     return null;
 };
