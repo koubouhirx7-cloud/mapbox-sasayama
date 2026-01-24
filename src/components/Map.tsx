@@ -14,7 +14,7 @@ const Map: React.FC = () => {
             console.warn('Mapbox access token is missing or not configured.');
         }
 
-        mapboxgl.accessToken = token;
+        mapboxgl.accessToken = token || '';
 
         if (mapContainerRef.current) {
             mapRef.current = new mapboxgl.Map({
