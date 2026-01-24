@@ -221,7 +221,8 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                         });
                     });
 
-                    // Markers for standard locations
+                    // Markers for standard locations (Removed as per user request)
+                    /* 
                     locationData.features.forEach((feature: any) => {
                         const coords = feature.geometry.coordinates as [number, number];
                         new mapboxgl.Marker({ color: '#2D5A27' })
@@ -229,6 +230,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                             .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<h3>${feature.properties.name}</h3><p>${feature.properties.description}</p>`))
                             .addTo(map);
                     });
+                    */
                 });
 
             } catch (e) {
