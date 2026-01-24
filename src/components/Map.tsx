@@ -272,17 +272,27 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
             if (!bounds.isEmpty()) {
                 map.fitBounds(bounds, {
                     padding: { top: 50, bottom: 200, left: 50, right: 50 },
-                    duration: 2000
+                    duration: 2000,
+                    bearing: 0,
+                    pitch: 0
                 });
             } else {
-                map.flyTo({ center: targetRoute.startPoint, zoom: 14, duration: 2000 });
+                map.flyTo({
+                    center: targetRoute.startPoint,
+                    zoom: 14,
+                    duration: 2000,
+                    bearing: 0,
+                    pitch: 0
+                });
             }
         } else {
             // Fallback for areas or missing data
             map.flyTo({
                 center: targetRoute.startPoint,
                 zoom: targetRoute.category === 'area' ? 15 : 14,
-                duration: 2000
+                duration: 2000,
+                bearing: 0,
+                pitch: 0
             });
         }
 
