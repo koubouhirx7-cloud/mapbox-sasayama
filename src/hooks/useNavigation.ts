@@ -79,11 +79,14 @@ export const useNavigation = (routeSteps: any[]) => {
             const isHighSpeed = speedRef.current > 15;
             const threshold = isHighSpeed ? 150 : 50; // meters
 
+            console.log(`Nav: Step ${nearestStepIndex}, Dist ${Math.round(minDistance)}m, Speed ${Math.round(speedRef.current)}km/h, Threshold ${threshold}m`);
+
             // If we haven't confirmed passing this step yet
             if (lastAnnouncedStepIndex.current < nearestStepIndex) {
                 if (minDistance < threshold) {
                     // Announce!
                     const instruction = step.voiceInstructions?.[0]?.announcement || step.maneuver.instruction;
+                    console.log(`Speaking: ${instruction}`);
                     speak(instruction);
                     lastAnnouncedStepIndex.current = nearestStepIndex;
                 }

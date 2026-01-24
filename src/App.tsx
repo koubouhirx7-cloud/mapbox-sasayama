@@ -139,11 +139,21 @@ function App() {
                         <button
                             onClick={toggleSimulation}
                             className={`w-full py-2 rounded text-xs font-bold transition-colors ${isSimulating
-                                    ? 'bg-red-500/20 text-red-200 border border-red-500/50 hover:bg-red-500/30'
-                                    : 'bg-satoyama-leaf/20 text-satoyama-leaf border border-satoyama-leaf/30 hover:bg-satoyama-leaf/30'
+                                ? 'bg-red-500/20 text-red-200 border border-red-500/50 hover:bg-red-500/30'
+                                : 'bg-satoyama-leaf/20 text-satoyama-leaf border border-satoyama-leaf/30 hover:bg-satoyama-leaf/30'
                                 }`}
                         >
                             {isSimulating ? '⏹ Stop Simulation' : '▶️ Start Simulation'}
+                        </button>
+                        <button
+                            onClick={() => {
+                                const utterance = new SpeechSynthesisUtterance("音声案内のテストです。聞こえますか？");
+                                utterance.lang = 'ja-JP';
+                                window.speechSynthesis.speak(utterance);
+                            }}
+                            className="w-full py-2 rounded text-xs font-bold bg-white/10 text-white hover:bg-white/20 transition-colors"
+                        >
+                            🔊 Test Voice
                         </button>
                     </div>
                 </div>
