@@ -330,6 +330,8 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                                 // Remove trailing punctuation
                                 cleaned = cleaned.replace(/[、,]\s*$/, '');
 
+                                if (text !== cleaned) console.log('[CleanText] Orig:', text, '->', cleaned);
+                                if (!cleaned.trim()) return text;
                                 return cleaned;
                             };
 
