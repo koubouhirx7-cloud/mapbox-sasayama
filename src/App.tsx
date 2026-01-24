@@ -48,7 +48,7 @@ function App() {
         updateLocation,
         startNavigation,
         stopNavigation
-    } = useNavigation(routeSteps, isVoiceEnabled);
+    } = useNavigation(routeSteps, false); // Voice disabled globally as per request
 
     const handleToggleSimulation = () => {
         // Unlock audio context explicitly on user interaction

@@ -83,26 +83,7 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulat
                         {route.description || 'No description available.'}
                     </p>
 
-                    {/* Voice Toggle */}
-                    {route.category === 'route' && (
-                        <div className="flex items-center justify-between mb-4 bg-[#2D5A27]/5 p-3 rounded-lg border border-[#2D5A27]/10">
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">{isVoiceEnabled ? '🔊' : '🔇'}</span>
-                                <div className="text-xs font-bold text-satoyama-forest">
-                                    <div>音声案内 (Voice)</div>
-                                    <div className="text-[10px] text-satoyama-leaf font-normal leading-none mt-0.5">{isVoiceEnabled ? '有効 (ON)' : '無効 (OFF)'}</div>
-                                </div>
-                            </div>
 
-                            <button
-                                onClick={() => onVoiceChange(!isVoiceEnabled)}
-                                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2D5A27] ${isVoiceEnabled ? 'bg-[#2D5A27]' : 'bg-gray-300'}`}
-                                title={isVoiceEnabled ? "Mute Voice" : "Enable Voice"}
-                            >
-                                <span className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 shadow-sm transform ${isVoiceEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                            </button>
-                        </div>
-                    )}
 
                     {route.category === 'route' && (
                         <div className="space-y-3">
@@ -132,14 +113,8 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulat
 
                             <div className="flex gap-2">
                                 <button
-                                    onClick={onTestVoice}
-                                    className="flex-1 py-3 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors"
-                                >
-                                    Test Voice
-                                </button>
-                                <button
                                     onClick={onStartSimulation}
-                                    className={`flex-[2] py-3 rounded-lg font-bold text-sm tracking-widest uppercase transition-all shadow-md flex items-center justify-center gap-2
+                                    className={`flex-1 py-3 rounded-lg font-bold text-sm tracking-widest uppercase transition-all shadow-md flex items-center justify-center gap-2
                                         ${isSimulating
                                             ? 'bg-red-500 text-white hover:bg-red-600'
                                             : 'bg-satoyama-forest text-white hover:bg-[#1a3815]'
