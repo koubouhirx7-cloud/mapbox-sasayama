@@ -110,6 +110,17 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                         if (onUserLocationChange) onUserLocationChange(position.coords.latitude, position.coords.longitude);
                     });
 
+                    // Auto-start Ride Mode
+                    const searchParams = new URLSearchParams(window.location.search);
+                    if (searchParams.get('mode') === 'ride') {
+                        // Wait a tick to ensure control is ready
+                        setTimeout(() => {
+                            map.setPitch(60); // Tilt for 3D/Heading up view
+                            setIs3D(true);    // Sync UI state
+                            geolocate.trigger();
+                        }, 1000);
+                    }
+
                     // 4. Area Overlays
                     // Sasayamaguchi Station Area
                     map.addSource('area-station', {

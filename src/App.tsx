@@ -105,17 +105,18 @@ function App() {
                 transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             `}>
-                <div className="p-6 border-b border-white/10 mt-12 md:mt-0">
-                    <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3 text-white">
-                        <span className="text-3xl">🚲</span>
+                <div className="p-6 border-b border-white/10 mt-12 md:mt-0 bg-[#2D5A27]">
+                    <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3 text-white font-outfit">
                         Green-Gear
                     </h1>
-                    <p className="text-xs text-satoyama-leaf mt-2 font-medium tracking-wide">丹波篠山サイクリングナビ</p>
+                    <p className="text-sm text-white/90 mt-1 font-medium tracking-widest uppercase border-l-2 border-white pl-2 ml-1">
+                        satoyama-ride
+                    </p>
                 </div>
 
                 <div className="flex-1 overflow-y-auto py-6 px-4">
                     <h2 className="text-xs uppercase tracking-widest text-satoyama-leaf font-bold mb-4 px-2">エリア選択</h2>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         {explorationRoutes.map((route) => (
                             <button
                                 key={route.id}
@@ -123,13 +124,13 @@ function App() {
                                     setActiveRoute(route.id);
                                     setIsSidebarOpen(false); // Auto-close on mobile
                                 }}
-                                className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center gap-3 group
+                                className={`w-full text-left px-4 py-4 rounded-lg transition-all duration-200 flex items-center gap-3 group min-h-[50px]
                                     ${activeRoute === route.id
                                         ? 'bg-white text-satoyama-forest shadow-md font-bold ring-1 ring-white'
                                         : 'hover:bg-satoyama-leaf/20 text-satoyama-mist'}`}
                             >
-                                <span className={`w-2 h-2 rounded-full transition-colors ${activeRoute === route.id ? 'bg-satoyama-forest' : 'bg-satoyama-leaf'}`}></span>
-                                <span>{route.name}</span>
+                                <span className={`w-3 h-3 rounded-full flex-shrink-0 transition-colors ${activeRoute === route.id ? 'bg-satoyama-forest' : 'bg-satoyama-leaf'}`}></span>
+                                <span className="text-base">{route.name}</span>
                             </button>
                         ))}
                     </div>
