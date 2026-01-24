@@ -466,6 +466,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
 
             {mapInstance && targetRoute?.data && (
                 <GpxRouteLayer
+                    key={activeRoute}
                     map={mapInstance}
                     isVisible={targetRoute.category === 'route'}
                     onRouteLoaded={onRouteLoaded}
