@@ -12,6 +12,12 @@ type RouteType = 'sasayama-main' | string;
 
 function App() {
     const [activeRoute, setActiveRoute] = useState<RouteType>('sasayama-main')
+
+    // Debug: Trace route changes
+    useEffect(() => {
+        console.log('[App] Action Route Changed:', activeRoute);
+    }, [activeRoute]);
+
     const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null)
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showWelcome, setShowWelcome] = useState(true);
@@ -32,12 +38,28 @@ function App() {
     } = useSimulation(routeGeometry);
 
     // Derived state for active route info
+    // Derived state for active route info
     const selectedRoute = useMemo(() => explorationRoutes.find(r => r.id === activeRoute), [activeRoute]);
+
+    const {
+        currentStep,
+        distanceToNext,
+        currentSpeed,
+        updateLocation,
+        startNavigation,
+        stopNavigation
+    } = useNavigation(routeSteps, isVoiceEnabled);
 
     const handleToggleSimulation = () => {
         // Unlock audio context explicitly on user interaction
         const utterance = new SpeechSynthesisUtterance('');
         window.speechSynthesis.speak(utterance);
+
+        if (!isSimulating) {
+            startNavigation();
+        } else {
+            stopNavigation();
+        }
 
         toggleSimulation();
     };
@@ -47,14 +69,6 @@ function App() {
         utterance.lang = 'ja-JP';
         window.speechSynthesis.speak(utterance);
     };
-
-    const {
-        currentStep,
-        distanceToNext,
-        currentSpeed,
-        updateLocation,
-        startNavigation
-    } = useNavigation(routeSteps, isVoiceEnabled);
 
     // ... (rest of useEffects)
 
