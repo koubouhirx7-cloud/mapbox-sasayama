@@ -24,7 +24,7 @@ const NavigationBanner: React.FC<NavigationBannerProps> = ({ step, distance, spe
                 <div className="flex-1 p-4 flex flex-col justify-center">
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-bold uppercase tracking-widest text-satoyama-leaf">
-                            {distance < 50 ? 'まもなく' : `あと ${Math.round(distance)}m`}
+                            {`あと ${Math.round(distance)}m`}
                         </span>
                         {speed !== undefined && (
                             <span className="text-xs bg-black/30 px-2 py-0.5 rounded font-mono">
