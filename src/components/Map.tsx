@@ -136,19 +136,19 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                         }
                     });
 
-                    // Auto-start Ride Mode
-                    const searchParams = new URLSearchParams(window.location.search);
-                    if (searchParams.get('mode') === 'ride') {
-                        // Wait a tick to ensure control is ready
-                        setTimeout(() => {
+                    // Auto-start Geolocation for all users
+                    // This ensures the "Blue Dot" appears and camera centers on user initially
+                    setTimeout(() => {
+                        console.log('Triggering auto-geolocation...');
+                        geolocate.trigger();
+
+                        // Check for specific launch modes
+                        const searchParams = new URLSearchParams(window.location.search);
+                        if (searchParams.get('mode') === 'ride') {
                             map.setPitch(60); // Tilt for 3D/Heading up view
                             setIs3D(true);    // Sync UI state
-
-                            // Check explicit permission state if usage relies on it, 
-                            // but trigger() handles the prompt.
-                            geolocate.trigger();
-                        }, 1000);
-                    }
+                        }
+                    }, 1000);
 
                     // 4. Area Overlays
                     // Sasayamaguchi Station Area
