@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ExplorationRoute } from '../data/explorationRoutes';
-import mapboxgl from 'mapbox-gl';
+import { getDistance } from '../utils/distance';
 
 interface WelcomeGuideProps {
     userLocation: { lat: number, lng: number } | null;
@@ -17,13 +17,21 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
     useEffect(() => {
         if (userLocation) {
             // Location found: Calculate distances
-            const userLngLat = new mapboxgl.LngLat(userLocation.lng, userLocation.lat);
             const routeDistances: { route: ExplorationRoute, dist: number }[] = [];
 
             routes.forEach(route => {
-                if (route.category !== 'route') return;
-                const startLngLat = new mapboxgl.LngLat(route.startPoint[0], route.startPoint[1]);
-                const dist = userLngLat.distanceTo(startLngLat) / 1000;
+                if (route.category !== 'route') return; // Only suggest routes
+
+                // Calculate distance using utility (no mapbox-gl required)
+                // route.startPoint is [lng, lat], userLocation is {lat, lng}
+                // getDistance(lat1, lng1, lat2, lng2)
+                const dist = getDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    route.startPoint[1],
+                    route.startPoint[0]
+                ) / 1000; // Convert meters to km
+
                 routeDistances.push({ route, dist });
             });
 
@@ -40,7 +48,7 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
             // No location yet: Set timeout for fallback
             const timer = setTimeout(() => {
                 setIsLocating(false);
-                // Fallback to first 2 routes (or default ones)
+                // Fallback to first 2 routes
                 setRecommendedRoutes(routes.filter(r => r.category === 'route').slice(0, 2));
             }, 3000);
             return () => clearTimeout(timer);
