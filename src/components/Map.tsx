@@ -428,14 +428,11 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
             }
 
             // Camera follow with easing
-            // If we are simulating, we probably want to "follow" the puck.
-            // Adjust camera bearing as well? "Course Up"?
-            // If the user manually toggled 3D, maybe we rotate the map too.
-            // Let's stick to simple "Course Up" if is3D is true.
-            // But modifying the camera bearing here might conflict with user interaction.
-            // For now, just follow position.
+            // Enforce North Up (bearing 0) and 45-degree pitch as per user request
             mapRef.current.easeTo({
                 center: [simulatedLocation.lng, simulatedLocation.lat],
+                pitch: 45,
+                bearing: 0,
                 duration: 100, // Short duration for smooth continuous update
                 easing: (t) => t
             });
