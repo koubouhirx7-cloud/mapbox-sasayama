@@ -193,44 +193,6 @@ const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
         }
     }, [activeRoute]);
 
-    // Handle visibility and bounds when switching routes
-    useEffect(() => {
-        if (!mapRef.current) return;
-
-        const dynamicLayer = 'cycling-route-line';
-        const map = mapRef.current;
-
-        const handleSwitch = () => {
-            // Toggle Dynamic Route
-            if (map.getLayer(dynamicLayer)) {
-                map.setLayoutProperty(
-                    dynamicLayer,
-                    'visibility',
-                    activeRoute === 'recommended' ? 'visible' : 'none'
-                );
-            }
-
-            // Fit bounds to selected route
-            const bounds = new mapboxgl.LngLatBounds();
-            if (activeRoute === 'recommended') {
-                const source = map.getSource('cycling-route') as any;
-                if (source && source._data && source._data.geometry) {
-                    source._data.geometry.coordinates.forEach((c: [number, number]) => bounds.extend(c));
-                    map.fitBounds(bounds, { padding: 50 });
-                }
-            } else if (activeRoute === 'gpx' && courseData) {
-                courseData.features[0].geometry.coordinates.forEach((c: any) => bounds.extend(c as [number, number]));
-                map.fitBounds(bounds, { padding: 50 });
-            }
-        };
-
-        if (map.isStyleLoaded()) {
-            handleSwitch();
-        } else {
-            map.on('load', handleSwitch);
-        }
-    }, [activeRoute]);
-
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center w-full h-full bg-red-50 p-8 text-center">
