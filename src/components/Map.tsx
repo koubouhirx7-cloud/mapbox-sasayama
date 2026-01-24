@@ -232,9 +232,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                             const allSteps = route.legs.flatMap((leg: any) => leg.steps);
                             onStepsChange(allSteps);
                         }
-                        if (onRouteLoaded) {
-                            onRouteLoaded(route.geometry);
-                        }
+                        // removed onRouteLoaded call to keep simulation on the GPX trace
                     }
                 } catch (err) {
                     console.error("Failed to load directions:", err);
