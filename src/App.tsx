@@ -197,13 +197,7 @@ function App() {
 
             {/* Main Map Area */}
             <main className="flex-grow relative h-full">
-                {currentStep && (
-                    <NavigationBanner
-                        step={currentStep}
-                        distance={distanceToNext}
-                        speed={isSimulating ? simSpeed : currentSpeed}
-                    />
-                )}
+
 
                 {selectedRoute && (
                     <CourseInfoPanel
