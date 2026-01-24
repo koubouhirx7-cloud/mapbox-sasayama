@@ -1,9 +1,21 @@
+import { useState } from 'react'
 import Map from './components/Map'
+import NavigationPanel from './components/NavigationPanel'
 
 function App() {
+    const [steps, setSteps] = useState<any[]>([])
+
     return (
-        <div className="flex flex-col w-screen h-screen bg-satoyama-mist">
-            <header className="bg-satoyama-forest text-satoyama-mist py-4 px-6 shadow-lg z-20 flex items-center justify-between">
+        <div className="flex flex-col w-screen h-screen bg-satoyama-mist font-sans">
+            <style>
+                {`
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #879166; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2D5A27; }
+                `}
+            </style>
+            <header className="bg-satoyama-forest text-satoyama-mist py-4 px-6 shadow-lg z-40 flex items-center justify-between">
                 <div>
                     <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
                         <span className="w-8 h-8 bg-satoyama-mist rounded-lg flex items-center justify-center text-satoyama-forest">🚲</span>
@@ -15,7 +27,8 @@ function App() {
                 </div>
             </header>
             <main className="relative flex-grow">
-                <Map />
+                <NavigationPanel steps={steps} />
+                <Map onStepsChange={setSteps} />
             </main>
         </div>
     )
