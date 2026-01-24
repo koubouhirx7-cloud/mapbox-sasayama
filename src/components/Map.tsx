@@ -3,7 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import { locationData } from '../data/locations';
 import { fetchDirections } from '../services/DirectionsService';
 import GpxRouteLayer from './GpxRouteLayer';
-import courseData from '../data/course.geojson';
+import courseData from '../data/course.json';
 
 const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
 

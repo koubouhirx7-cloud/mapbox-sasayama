@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import courseData from '../data/course.geojson';
+import courseData from '../data/course.json';
 
 interface GpxRouteLayerProps {
     map: mapboxgl.Map;
