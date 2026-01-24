@@ -10,10 +10,11 @@ const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
 interface MapProps {
     onStepsChange?: (steps: any[]) => void;
     onProximityChange?: (step: any, distance: number | null) => void;
-    activeRoute: 'recommended' | 'gpx';
+    onUserLocationChange?: (lat: number, lng: number) => void;
+    activeRoute: 'recommended' | string;
 }
 
-const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, activeRoute }) => {
+const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocationChange, activeRoute }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -61,11 +62,17 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, activeRoute
                 });
                 mapRef.current.addControl(geolocate, 'top-right');
 
-                // Proximity Detection logic
+                // Proximity & Location tracking
                 geolocate.on('geolocate', (position: any) => {
+                    const { latitude, longitude } = position.coords;
+
+                    if (onUserLocationChange) {
+                        onUserLocationChange(latitude, longitude);
+                    }
+
                     if (!onProximityChange || activeRoute !== 'recommended') return;
 
-                    const userCoords = new mapboxgl.LngLat(position.coords.longitude, position.coords.latitude);
+                    const userCoords = new mapboxgl.LngLat(longitude, latitude);
                     let closestStep = null;
                     let minDistance = Infinity;
 
@@ -85,7 +92,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, activeRoute
                     }
                 });
 
-                // Add Markers
+                // Add Markers (POI)
                 locationData.features.forEach((feature: any) => {
                     const coords = feature.geometry.coordinates as [number, number];
                     const marker = new mapboxgl.Marker({ color: '#2D5A27' })
@@ -116,14 +123,12 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, activeRoute
                     markersRef.current.push(marker);
                 });
 
-                // Add Route Line
+                // Add Route Line (Dynamic Recommended)
                 mapRef.current.on('load', async () => {
                     if (!mapRef.current) return;
 
                     try {
-                        // Extract coordinates for directions
                         const coords = locationData.features.map(f => f.geometry.coordinates as [number, number]);
-
                         const data = await fetchDirections(coords);
                         const route = data.routes[0];
 
@@ -162,7 +167,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, activeRoute
                         if (activeRoute === 'recommended') {
                             route.geometry.coordinates.forEach((c: [number, number]) => bounds.extend(c));
                             mapRef.current.fitBounds(bounds, { padding: 50 });
-                        } else if (courseData) {
+                        } else if (activeRoute === 'sasayama-main' && courseData) {
                             courseData.features[0].geometry.coordinates.forEach((c: any) => bounds.extend(c as [number, number]));
                             mapRef.current.fitBounds(bounds, { padding: 50 });
                         }
@@ -192,7 +197,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, activeRoute
         const dynamicLayer = 'cycling-route-line';
 
         const updateVisibility = () => {
-            // 1. Toggle Markers
+            // 1. Toggle Markers (only for Recommended)
             const showMarkers = activeRoute === 'recommended';
             markersRef.current.forEach(marker => {
                 const el = marker.getElement();
@@ -204,7 +209,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, activeRoute
                 map.setLayoutProperty(
                     dynamicLayer,
                     'visibility',
-                    activeRoute === 'recommended' ? 'visible' : 'none'
+                    showMarkers ? 'visible' : 'none'
                 );
             }
 
@@ -216,7 +221,8 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, activeRoute
                     source._data.geometry.coordinates.forEach((c: [number, number]) => bounds.extend(c));
                     map.fitBounds(bounds, { padding: 50 });
                 }
-            } else if (activeRoute === 'gpx' && courseData) {
+            } else if (activeRoute === 'sasayama-main' && courseData) {
+                // Show GPX Layer visibility is handled by GpxRouteLayer component
                 courseData.features[0].geometry.coordinates.forEach((c: any) => bounds.extend(c as [number, number]));
                 map.fitBounds(bounds, { padding: 50 });
             }
@@ -254,7 +260,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, activeRoute
                 className="w-full h-full min-h-[400px]"
                 style={{ position: 'absolute', top: 0, bottom: 0, width: '100%' }}
             />
-            {mapInstance && <GpxRouteLayer map={mapInstance} isVisible={activeRoute === 'gpx'} />}
+            {mapInstance && <GpxRouteLayer map={mapInstance} isVisible={activeRoute === 'sasayama-main'} />}
         </div>
     );
 };
