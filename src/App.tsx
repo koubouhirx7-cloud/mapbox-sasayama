@@ -137,7 +137,12 @@ function App() {
                             />
                         </div>
                         <button
-                            onClick={toggleSimulation}
+                            onClick={() => {
+                                // Unlock audio context
+                                const utterance = new SpeechSynthesisUtterance('');
+                                window.speechSynthesis.speak(utterance);
+                                toggleSimulation();
+                            }}
                             className={`w-full py-2 rounded text-xs font-bold transition-colors ${isSimulating
                                 ? 'bg-red-500/20 text-red-200 border border-red-500/50 hover:bg-red-500/30'
                                 : 'bg-satoyama-leaf/20 text-satoyama-leaf border border-satoyama-leaf/30 hover:bg-satoyama-leaf/30'

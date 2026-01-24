@@ -189,7 +189,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
         };
     }, []);
 
-    // Handle Route Changes
+    // Handle Route Changes & Fetch Directions
     useEffect(() => {
         if (!mapRef.current) return;
         const map = mapRef.current;
@@ -201,6 +201,47 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                 zoom: 14,
                 duration: 2000
             });
+
+            // Fetch Turn-by-Turn Directions
+            const loadRoute = async () => {
+                try {
+                    // Sample coordinates from courseData to force the route match
+                    // This ensures the API returns instructions for THIS specific path
+                    const rawCoords = courseData.features[0].geometry.coordinates;
+                    const waypoints: [number, number][] = [];
+
+                    // Add Start
+                    waypoints.push(rawCoords[0] as [number, number]);
+
+                    // Add intermediates (every 20th point to stay under URL limit but define shape)
+                    // The Mapbox Directions API supports up to 25 coordinates
+                    const step = Math.ceil(rawCoords.length / 23);
+                    for (let i = step; i < rawCoords.length - 1; i += step) {
+                        waypoints.push(rawCoords[i] as [number, number]);
+                    }
+
+                    // Add End
+                    waypoints.push(rawCoords[rawCoords.length - 1] as [number, number]);
+
+                    const data = await fetchDirections(waypoints);
+
+                    if (data.routes && data.routes.length > 0) {
+                        const route = data.routes[0];
+                        if (onStepsChange) {
+                            // Extract steps from all legs (usually just 1 leg for simple routes, but could be multiple if waypoints used)
+                            const allSteps = route.legs.flatMap((leg: any) => leg.steps);
+                            onStepsChange(allSteps);
+                        }
+                        if (onRouteLoaded) {
+                            onRouteLoaded(route.geometry);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Failed to load directions:", err);
+                }
+            };
+
+            loadRoute();
         }
     }, [activeRoute]);
 
