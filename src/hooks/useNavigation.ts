@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { playChime } from '../utils/audio';
 
 interface NavigationState {
     currentStep: any | null;
@@ -90,11 +89,8 @@ export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true)
             // Debug Log
             // console.log(`Nav: nearest=${nearestStepIndex}, dist=${Math.round(minDistance)}m, threshold=${threshold}m, last=${lastAnnouncedStepIndex.current}`);
 
-            // Trigger sound if enabled and new step
-            if (isVoiceEnabled && shouldAnnounce && nearestStepIndex !== lastAnnouncedStepIndex.current) {
-                // Play notification sound
-                playChime();
-
+            // Trigger announcement if new step
+            if (shouldAnnounce && nearestStepIndex !== lastAnnouncedStepIndex.current) {
                 // Update state
                 lastAnnouncedStepIndex.current = nearestStepIndex;
                 // The instruction implies setting currentStep here, but the original code
@@ -114,7 +110,6 @@ export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true)
 
     const startNavigation = () => {
         console.log("Starting Navigation");
-        if (isVoiceEnabled) playChime(); // Initial confirmation
         lastAnnouncedStepIndex.current = -1;
         setState(prev => ({ ...prev, isNavigating: true }));
     };

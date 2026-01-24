@@ -7,13 +7,10 @@ interface CourseInfoPanelProps {
     isSimulating: boolean;
     speed: number;
     onSpeedChange: (speed: number) => void;
-    isVoiceEnabled: boolean;
-    onVoiceChange: (enabled: boolean) => void;
-    onTestVoice: () => void;
     className?: string;
 }
 
-const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulation, isSimulating, speed, onSpeedChange, isVoiceEnabled, onVoiceChange, onTestVoice, className = '' }) => {
+const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulation, isSimulating, speed, onSpeedChange, className = '' }) => {
     const [isExpanded, setIsExpanded] = useState(true);
 
     return (

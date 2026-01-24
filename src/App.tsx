@@ -26,7 +26,6 @@ function App() {
     // Navigation State
     const [routeSteps, setRouteSteps] = useState<any[]>([]);
     const [routeGeometry, setRouteGeometry] = useState<any>(null); // New: Store geometry for simulation
-    const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
 
     // ... (rest of hooks)
 
@@ -49,13 +48,9 @@ function App() {
         updateLocation,
         startNavigation,
         stopNavigation
-    } = useNavigation(routeSteps, true); // Sound notification enabled
+    } = useNavigation(routeSteps);
 
     const handleToggleSimulation = () => {
-        // Unlock audio context explicitly on user interaction
-        const utterance = new SpeechSynthesisUtterance('');
-        window.speechSynthesis.speak(utterance);
-
         if (!isSimulating) {
             startNavigation();
         } else {
@@ -65,11 +60,6 @@ function App() {
         toggleSimulation();
     };
 
-    const handleTestVoice = () => {
-        const utterance = new SpeechSynthesisUtterance('音声案内のテストです');
-        utterance.lang = 'ja-JP';
-        window.speechSynthesis.speak(utterance);
-    };
 
     // ... (rest of useEffects)
 
@@ -209,9 +199,6 @@ function App() {
                         onStartSimulation={handleToggleSimulation}
                         speed={simSpeed}
                         onSpeedChange={setSpeed}
-                        isVoiceEnabled={isVoiceEnabled}
-                        onVoiceChange={setIsVoiceEnabled}
-                        onTestVoice={handleTestVoice}
                         className="absolute bottom-6 left-4 right-4 md:bottom-8 md:left-8 md:right-auto z-30"
                     />
                 )}
