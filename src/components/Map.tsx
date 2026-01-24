@@ -232,8 +232,17 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                             // Filter out intermediate "Arrive" steps (waypoints) to prevent falsely announcing destination at every sample point
                             const rawSteps = route.legs.flatMap((leg: any) => leg.steps);
                             const allSteps = rawSteps.filter((step: any) => {
-                                // Filter out ALL 'arrive' steps as per user request ("目的地はなしで")
-                                return step.maneuver.type !== 'arrive';
+                                // Aggressive filtering for "Destination" announcements
+                                const isArriveType = step.maneuver.type === 'arrive';
+                                const hasDestinationText = step.maneuver.instruction.includes('目的地') ||
+                                    step.maneuver.instruction.toLowerCase().includes('arrive') ||
+                                    step.maneuver.instruction.toLowerCase().includes('destination');
+
+                                if (isArriveType || hasDestinationText) {
+                                    console.log('Filtered out step:', step.maneuver.instruction);
+                                    return false;
+                                }
+                                return true;
                             });
                             onStepsChange(allSteps);
                         }
