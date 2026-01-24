@@ -21,13 +21,13 @@ export interface ExplorationRoute {
 export const explorationRoutes: ExplorationRoute[] = [
     {
         id: 'sasayama-main',
-        name: '味間ルート (丹波篠山 散策)',
+        name: '味間ルート (丹波篠山茶の里)',
         startPoint: [135.16195, 35.0747],
         color: '#2D5A27',
         category: 'route',
         data: courseSasayama,
-        distance: 14.0,
-        description: '丹波篠山の魅力を満喫する定番コース。美しい茶畑やのどかな田園風景の中をのんびりと駆け抜けます。'
+        distance: 13.9,
+        description: '1200年前から続く隠れた茶畑の里、味間（あじま）エリアを巡るサイクリングコース。静かな里山の風景を楽しめます。'
     },
     {
         id: 'tamba-ride',
@@ -85,7 +85,7 @@ export const explorationRoutes: ExplorationRoute[] = [
         startPoint: [135.1616, 35.07501],
         color: '#8E24AA',
         category: 'route',
-        data: courseNishiki, // Assuming verified data available or placeholder
+        data: courseNishiki,
         distance: 22.6,
         description: '四季折々の自然と、修験道の歴史が残る山里を巡るコース。距離があり、走りごたえのあるルートです。'
     },
@@ -114,5 +114,29 @@ export const explorationRoutes: ExplorationRoute[] = [
         color: '#800000',
         category: 'area',
         description: '篠山城跡を中心とした城下町エリア。歴史散策や食べ歩きにおすすめのスポットが集中しています。'
+    },
+    {
+        id: 'imada-area',
+        name: '今田エリア',
+        startPoint: [135.130, 34.980],
+        color: '#1E88E5',
+        category: 'area',
+        description: '立杭焼の里として知られる今田町。歴史ある窯元や陶芸体験が楽しめるエリアです。'
+    },
+    {
+        id: 'fukusumi-area',
+        name: '福住エリア',
+        startPoint: [135.343, 35.071],
+        color: '#43A047',
+        category: 'area',
+        description: '重要伝統的建造物群保存地区に指定されている宿場町。静かな歴史の町並みを探索できます。'
+    },
+    {
+        id: 'nishiki-area',
+        name: '西紀エリア',
+        startPoint: [135.161, 35.075],
+        color: '#8E24AA',
+        category: 'area',
+        description: '美しい自然と山里の風景が広がる西紀エリア。サイクリングや自然散策に最適です。'
     }
 ];
