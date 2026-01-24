@@ -449,14 +449,14 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
 
             // Only force zoom on the first frame of simulation to allow manual zoom (scale change) afterwards
             // User requested "Swipe to change scale" (Manual Zoom)
-            if (!hasInitialZoomedRef.current) {
+            if (hasInitialZoomedRef && !hasInitialZoomedRef.current) {
                 cameraOptions.zoom = 16.5; // Initial "Zoom up"
                 hasInitialZoomedRef.current = true;
             }
 
             mapRef.current.easeTo(cameraOptions);
         } else {
-            hasInitialZoomedRef.current = false; // Reset for next run
+            if (hasInitialZoomedRef) hasInitialZoomedRef.current = false; // Reset for next run
             if (simulationMarkerRef.current) {
                 simulationMarkerRef.current.remove();
                 simulationMarkerRef.current = null;
