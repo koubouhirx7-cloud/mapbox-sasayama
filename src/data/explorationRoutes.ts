@@ -14,85 +14,105 @@ export interface ExplorationRoute {
     color: string;
     category: 'route' | 'area';
     data?: any;
+    distance?: number; // km
+    description?: string;
 }
 
 export const explorationRoutes: ExplorationRoute[] = [
     {
         id: 'sasayama-main',
         name: '味間ルート (丹波篠山 散策)',
-        startPoint: [135.16195, 35.0747], // Start of course_sasayama.json
+        startPoint: [135.16195, 35.0747],
         color: '#2D5A27',
         category: 'route',
-        data: courseSasayama
+        data: courseSasayama,
+        distance: 14.0,
+        description: '丹波篠山の魅力を満喫する定番コース。美しい茶畑やのどかな田園風景の中をのんびりと駆け抜けます。'
     },
     {
         id: 'tamba-ride',
         name: '妻入り造り・城下町コース (丹波篠山 西部)',
-        startPoint: [135.21742, 35.07400], // Start of course_tamba.json
+        startPoint: [135.21742, 35.07400],
         color: '#2D5A27',
         category: 'route',
-        data: courseTamba
+        data: courseTamba,
+        distance: 12.6,
+        description: '河原町妻入商家群など、城下町の歴史的な町並みを巡るコース。古民家カフェや雑貨店巡りにも最適です。'
     },
     {
         id: 'fukusumi-ride',
         name: '宿場町 福住コース (丹波篠山 東部)',
-        startPoint: [135.34359, 35.07127], // Start of course_fukusumi.json
+        startPoint: [135.34359, 35.07127],
         color: '#5D4037',
         category: 'route',
-        data: courseFukusumi
+        data: courseFukusumi,
+        distance: 7.4,
+        description: '重要伝統的建造物群保存地区である福住の宿場町を巡るコース。往時の面影を残す静かな町並みを楽しめます。'
     },
     {
         id: 'sasayama-loop',
         name: '篠山口駅・城下町 1周コース',
-        startPoint: [135.17886, 35.05581], // Start of course_loop.json
+        startPoint: [135.17886, 35.05581],
         color: '#1E88E5',
         category: 'route',
-        data: courseLoop
+        data: courseLoop,
+        distance: 15.0,
+        description: '篠山口駅を起点に、城下町エリアをぐるっと一周する周遊コース。アクセス良好で、観光のメインルートとしておすすめです。'
     },
     {
         id: 'tannan-ride',
         name: '丹南エリア 渓谷コース',
-        startPoint: [135.15413, 35.07742], // Start of course_tannan.json
+        startPoint: [135.15413, 35.07742],
         color: '#43A047',
         category: 'route',
-        data: courseTannan
+        data: courseTannan,
+        distance: 17.5,
+        description: '篠山川の渓谷美や、丹波竜化石発見地周辺を走る自然豊かなコース。ダイナミックな景観が魅力です。'
     },
     {
         id: 'joto-ride',
         name: '城東エリア 歴史街道コース',
-        startPoint: [135.2784, 35.07028], // Start of course_joto.json
+        startPoint: [135.2784, 35.07028],
         color: '#D84315',
         category: 'route',
-        data: courseJoto
+        data: courseJoto,
+        distance: 16.7,
+        description: 'かつての街道沿いの歴史を感じながら、広大な田園風景の中を走るコース。日置地区などの史跡も点在しています。'
     },
     {
         id: 'nishiki-ride',
         name: '西紀エリア 四季コース',
-        startPoint: [135.1616, 35.07501], // Start of course_nishiki.json
+        startPoint: [135.1616, 35.07501],
         color: '#8E24AA',
         category: 'route',
-        data: courseNishiki
+        data: courseNishiki, // Assuming verified data available or placeholder
+        distance: 22.6,
+        description: '四季折々の自然と、修験道の歴史が残る山里を巡るコース。距離があり、走りごたえのあるルートです。'
     },
     {
         id: 'tachikui-ride',
         name: '立杭エリア (今田町) 陶芸コース',
-        startPoint: [135.13075, 34.98046], // Start of course_tachikui.json
+        startPoint: [135.13075, 34.98046],
         color: '#795548',
         category: 'route',
-        data: courseTachikui
+        data: courseTachikui,
+        distance: 13.2,
+        description: '日本六古窯の一つ、丹波焼の里・立杭（たちくい）の窯元路地を散策。陶芸体験やギャラリー巡りが楽しめます。'
     },
     {
         id: 'station-area',
         name: '篠山口駅エリア',
         startPoint: [135.1740, 35.0610],
         color: '#FF8C00',
-        category: 'area'
+        category: 'area',
+        description: '篠山口駅周辺のレンタサイクル拠点や、出発前の立ち寄りスポット。'
     },
     {
         id: 'jokamachi-area',
         name: '城下町エリア',
         startPoint: [135.2166, 35.0755],
         color: '#800000',
-        category: 'area'
+        category: 'area',
+        description: '篠山城跡を中心とした城下町エリア。歴史散策や食べ歩きにおすすめのスポットが集中しています。'
     }
 ];

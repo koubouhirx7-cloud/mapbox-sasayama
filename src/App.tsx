@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Map from './components/Map'
 import NavigationBanner from './components/NavigationPopup' // Still using the same file but renamed component inside
+import CourseInfoPanel from './components/CourseInfoPanel'
 import { explorationRoutes } from './data/explorationRoutes'
 import { useNavigation } from './hooks/useNavigation'
 import { useSimulation } from './hooks/useSimulation'
@@ -39,6 +40,17 @@ function App() {
         setSpeed,
         speed: simSpeed
     } = useSimulation(routeGeometry);
+
+    // Derived state for active route info
+    const selectedRoute = useMemo(() => explorationRoutes.find(r => r.id === activeRoute), [activeRoute]);
+
+    const handleToggleSimulation = () => {
+        // Unlock audio context explicitly on user interaction
+        const utterance = new SpeechSynthesisUtterance('');
+        window.speechSynthesis.speak(utterance);
+
+        toggleSimulation();
+    };
 
     const {
         currentStep,
@@ -166,47 +178,7 @@ function App() {
                     </div>
                 </div>
 
-                {/* Simulation Control Panel */}
-                <div className="p-4 bg-white/5 border-t border-white/10">
-                    <h3 className="text-[10px] uppercase font-bold text-satoyama-leaf mb-2">Simulation</h3>
-                    <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between text-xs">
-                            <span>Speed: {simSpeed} km/h</span>
-                            <input
-                                type="range"
-                                min="5" max="60" step="5"
-                                value={simSpeed}
-                                onChange={(e) => setSpeed(parseInt(e.target.value))}
-                                className="w-24 accent-satoyama-leaf"
-                            />
-                        </div>
-                        <button
-                            onClick={() => {
-                                // Unlock audio context
-                                const utterance = new SpeechSynthesisUtterance('');
-                                window.speechSynthesis.speak(utterance);
-                                toggleSimulation();
-                                if (!isSimulating) setIsSidebarOpen(false); // Close menu when starting sim
-                            }}
-                            className={`w-full py-2 rounded text-xs font-bold transition-colors ${isSimulating
-                                ? 'bg-red-500/20 text-red-200 border border-red-500/50 hover:bg-red-500/30'
-                                : 'bg-satoyama-leaf/20 text-satoyama-leaf border border-satoyama-leaf/30 hover:bg-satoyama-leaf/30'
-                                }`}
-                        >
-                            {isSimulating ? '⏹ Stop Simulation' : '▶️ Start Simulation'}
-                        </button>
-                        <button
-                            onClick={() => {
-                                const utterance = new SpeechSynthesisUtterance("音声案内のテストです。聞こえますか？");
-                                utterance.lang = 'ja-JP';
-                                window.speechSynthesis.speak(utterance);
-                            }}
-                            className="w-full py-2 rounded text-xs font-bold bg-white/10 text-white hover:bg-white/20 transition-colors"
-                        >
-                            🔊 Test Voice
-                        </button>
-                    </div>
-                </div>
+
 
                 <div className="p-4 border-t border-white/10 text-[10px] text-center text-satoyama-leaf opacity-60">
                     &copy; 2026 Green-Gear Project
@@ -220,6 +192,17 @@ function App() {
                         step={currentStep}
                         distance={distanceToNext}
                         speed={isSimulating ? simSpeed : currentSpeed}
+                    />
+                )}
+
+                {selectedRoute && (
+                    <CourseInfoPanel
+                        route={selectedRoute}
+                        isSimulating={isSimulating}
+                        onStartSimulation={handleToggleSimulation}
+                        speed={simSpeed}
+                        onSpeedChange={setSpeed}
+                        className="absolute bottom-6 left-4 right-4 md:bottom-8 md:left-8 md:right-auto z-30"
                     />
                 )}
 
