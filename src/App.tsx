@@ -55,7 +55,7 @@ function App() {
         if (isSimulating && simulatedLocation) {
             updateLocation(simulatedLocation.lat, simulatedLocation.lng);
         }
-    }, [isSimulating, simulatedLocation]);
+    }, [isSimulating, simulatedLocation, updateLocation]);
 
     // ... (sortedRoutes memo)
 
