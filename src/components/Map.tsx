@@ -16,6 +16,7 @@ interface MapProps {
     simulatedLocation?: { lat: number, lng: number, bearing?: number } | null;
     onRouteLoaded?: (route: any) => void;
     selectionTimestamp?: number;
+    speed?: number;
 }
 
 // Helper to create a circle GeoJSON
@@ -35,7 +36,16 @@ const createGeoJSONCircle = (center: [number, number], radiusInKm: number, point
     return ret;
 };
 
-const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocationChange, activeRoute, simulatedLocation, onRouteLoaded, selectionTimestamp }) => {
+const Map: React.FC<MapProps> = ({
+    onStepsChange,
+    onProximityChange,
+    onUserLocationChange,
+    activeRoute,
+    simulatedLocation,
+    onRouteLoaded,
+    selectionTimestamp,
+    speed = 0
+}) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -50,6 +60,13 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
 
     // Track initial zoom for simulation
     const hasInitialZoomedRef = useRef(false);
+    const hasSnappedToNavRef = useRef(false);
+
+    // Reset snap ref when route changes
+    useEffect(() => {
+        hasSnappedToNavRef.current = false;
+        hasInitialZoomedRef.current = false;
+    }, [activeRoute, selectionTimestamp]);
 
     useEffect(() => {
         onUserLocationChangeRef.current = onUserLocationChange;
@@ -400,10 +417,40 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
         setIs3D(!is3D);
     };
 
-    // Simulation Marker
-    const simulationMarkerRef = useRef<mapboxgl.Marker | null>(null);
+    // Navigation View Lock (North Up + 45deg Tilt)
+    // Triggered when speed is detected
+    useEffect(() => {
+        if (!mapRef.current) return;
+        const map = mapRef.current;
 
-    // Update Simulation Marker
+        const isMoving = speed > 3; // Threshold: 3km/h
+
+        if (isMoving) {
+            // Force North Up and 45deg Tilt while moving
+            // Note: We use easeTo with short duration to keep it smooth
+            const options: any = {
+                bearing: 0,
+                pitch: 45,
+                duration: 500
+            };
+
+            // Force Zoom 16.5 (~200m) only on the VERY FIRST detection of movement for this route
+            if (!hasSnappedToNavRef.current) {
+                options.zoom = 16.5;
+                hasSnappedToNavRef.current = true;
+                console.log('[Map] Movement detected. Snapping to Nav View (Zoom 16.5, North Up, 45 Tilt)');
+            }
+
+            // Only update camera if we are NOT simulating (simulation has its own loop)
+            if (!simulatedLocation) {
+                // We don't center here because Mapbox's GeolocateControl (trackUserLocation) handles centering.
+                // However, we WANT to override bearing/pitch.
+                map.easeTo(options);
+            }
+        }
+    }, [speed, simulatedLocation]);
+
+    // Simulation Marker & Camera Follow
     useEffect(() => {
         if (!mapRef.current) return;
 
@@ -448,8 +495,6 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                 easing: (t) => t
             };
 
-            // Only force zoom on the first frame of simulation to allow manual zoom (scale change) afterwards
-            // User requested "Swipe to change scale" (Manual Zoom)
             if (hasInitialZoomedRef && !hasInitialZoomedRef.current) {
                 // Force an immediate snap to North Up, Tilt, and Zoom on the very first frame
                 mapRef.current.jumpTo({
@@ -459,6 +504,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                     zoom: 16.5
                 });
                 hasInitialZoomedRef.current = true;
+                hasSnappedToNavRef.current = true; // Sync this ref too
             } else {
                 // Continuous smooth follow
                 mapRef.current.easeTo(cameraOptions);

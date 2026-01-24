@@ -220,6 +220,7 @@ function App() {
                     activeRoute={activeRoute}
                     simulatedLocation={simulatedLocation}
                     selectionTimestamp={selectionTimestamp}
+                    speed={currentSpeed}
                     onUserLocationChange={(lat, lng) => {
                         // Only update real location if not simulating
                         if (!isSimulating) {
