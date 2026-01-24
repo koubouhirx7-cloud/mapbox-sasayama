@@ -42,6 +42,17 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
     const [is3D, setIs3D] = useState(false);
 
+    // Refs for callbacks to avoid stale closures in Mapbox event listeners
+    const onUserLocationChangeRef = useRef(onUserLocationChange);
+    const onStepsChangeRef = useRef(onStepsChange);
+    const onRouteLoadedRef = useRef(onRouteLoaded);
+
+    useEffect(() => {
+        onUserLocationChangeRef.current = onUserLocationChange;
+        onStepsChangeRef.current = onStepsChange;
+        onRouteLoadedRef.current = onRouteLoaded;
+    }, [onUserLocationChange, onStepsChange, onRouteLoaded]);
+
     // Area Polygons
     const sasayamaStationPoly = createGeoJSONCircle([135.1834, 35.0583], 0.8); // 800m radius
     // Jokamachi Area (Simple estimation based on request)
@@ -76,6 +87,9 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                     if (layers) {
                         layers.forEach((layer) => {
                             if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+                                // Skip road shields (they use 'ref' not 'name')
+                                if (layer.id.indexOf('shield') !== -1) return;
+
                                 map.setLayoutProperty(layer.id, 'text-field', ['get', 'name_ja']);
                                 map.setPaintProperty(layer.id, 'text-halo-color', '#ffffff');
                                 map.setPaintProperty(layer.id, 'text-halo-width', 2);
@@ -107,7 +121,8 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                     map.addControl(geolocate, 'top-right');
 
                     geolocate.on('geolocate', (position: any) => {
-                        if (onUserLocationChange) onUserLocationChange(position.coords.latitude, position.coords.longitude);
+                        const cb = onUserLocationChangeRef.current;
+                        if (cb) cb(position.coords.latitude, position.coords.longitude);
                     });
 
                     // Auto-start Ride Mode
@@ -254,7 +269,8 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
 
                     if (data.routes && data.routes.length > 0) {
                         const route = data.routes[0];
-                        if (onStepsChange) {
+                        const cb = onStepsChangeRef.current;
+                        if (cb) {
                             // Extract steps from all legs
                             // Filter out intermediate "Arrive" steps (waypoints) to prevent falsely announcing destination at every sample point
                             const rawSteps = route.legs.flatMap((leg: any) => leg.steps);
@@ -312,7 +328,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange, onProximityChange, onUserLocat
                                 return newStep;
                             });
 
-                            onStepsChange(allSteps);
+                            cb(allSteps);
                         }
                         // removed onRouteLoaded call to keep simulation on the GPX trace
                     }
