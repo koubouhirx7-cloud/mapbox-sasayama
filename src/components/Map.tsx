@@ -5,6 +5,7 @@ import { fetchDirections } from '../services/DirectionsService';
 import GpxRouteLayer from './GpxRouteLayer';
 import courseData from '../data/course.json';
 import { explorationRoutes } from '../data/explorationRoutes';
+import { getMatchedRoute } from '../utils/mapMatching';
 
 const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
 
@@ -308,99 +309,19 @@ const Map: React.FC<MapProps> = ({
             try {
                 if (!targetRoute.data) return;
 
-                // Find the proper LineString feature for the route path
                 const routeFeature = targetRoute.data.features?.find((f: any) => f.geometry.type === 'LineString');
                 if (!routeFeature) return;
 
-                // Sample coordinates from route data to force the route match
-                // This ensures the API returns instructions for THIS specific path
-                const rawCoords = routeFeature.geometry.coordinates;
-                const waypoints: [number, number][] = [];
+                const coords = routeFeature.geometry.coordinates;
 
-                // Helper to ensure 2D coordinates [lng, lat]
-                const toLngLat = (coord: any[]) => [coord[0], coord[1]] as [number, number];
+                // Use Map Matching API for precise snapping and steps as requested
+                const matched = await getMatchedRoute(coords);
 
-                // Add Start
-                waypoints.push(toLngLat(rawCoords[0]));
-
-                // Add intermediates (every 20th point to stay under URL limit but define shape)
-                // The Mapbox Directions API supports up to 25 coordinates
-                const step = Math.ceil(rawCoords.length / 23);
-                for (let i = step; i < rawCoords.length - 1; i += step) {
-                    waypoints.push(toLngLat(rawCoords[i]));
-                }
-
-                // Add End
-                waypoints.push(rawCoords[rawCoords.length - 1] as [number, number]);
-
-                const data = await fetchDirections(waypoints);
-
-                if (data.routes && data.routes.length > 0) {
-                    const route = data.routes[0];
+                if (matched) {
                     const cb = onStepsChangeRef.current;
                     if (cb) {
-                        // Extract steps from all legs
-                        // Filter out intermediate "Arrive" steps (waypoints) to prevent falsely announcing destination at every sample point
-                        const rawSteps = route.legs.flatMap((leg: any) => leg.steps);
-                        // 1. Filter out specific "Arrive" steps
-                        const filteredSteps = rawSteps.filter((step: any) => {
-                            return step.maneuver.type !== 'arrive';
-                        });
-
-                        // 2. Sanitize text in remaining steps to remove "destination" mentions
-                        // (e.g. "Right turn, then you will arrive at destination")
-                        const allSteps = filteredSteps.map((step: any) => {
-                            const cleanText = (text: string) => {
-                                if (!text) return text;
-
-                                // Remove destination references first (Aggressive removal of clauses)
-                                let cleaned = text
-                                    // Japanese Patterns: Remove entire clauses
-                                    .replace(/目的地は.*(あります|です)/g, '')   // "目的地は右側にあります" -> ""
-                                    .replace(/まもなく目的地.*(です|ます)/g, '')   // "まもなく目的地周辺です" -> ""
-                                    .replace(/(そして)?目的地に到着(します|です|しました)?/g, '') // "目的地に到着します" -> ""
-
-                                    // English Patterns
-                                    .replace(/(and )?you will arrive at your destination/gi, '')
-                                    .replace(/the destination is on your (left|right)/gi, '')
-                                    .replace(/, then you will arrive/gi, '')
-
-                                    // Fallbacks
-                                    .replace(/目的地/g, '')
-                                    .trim();
-
-                                // Cleanup leading/trailing punctuation left behind
-                                cleaned = cleaned.replace(/^[、。,]\s*/, '');
-
-                                // Fix Japanese conjugation at the end of the sentence
-                                // e.g., "右折して、" -> "右折します" (because "目的地..." was removed after it)
-                                if (cleaned.endsWith('して、') || cleaned.endsWith('して')) {
-                                    cleaned = cleaned.replace(/して、?$/, 'します');
-                                }
-
-                                // Remove trailing punctuation
-                                cleaned = cleaned.replace(/[、,]\s*$/, '');
-
-                                if (text !== cleaned) console.log('[CleanText] Orig:', text, '->', cleaned);
-                                if (!cleaned.trim()) return text;
-                                return cleaned;
-                            };
-
-                            const newStep = { ...step };
-                            newStep.maneuver = { ...step.maneuver, instruction: cleanText(newStep.maneuver.instruction) };
-
-                            if (newStep.voiceInstructions) {
-                                newStep.voiceInstructions = newStep.voiceInstructions.map((v: any) => ({
-                                    ...v,
-                                    announcement: cleanText(v.announcement)
-                                }));
-                            }
-                            return newStep;
-                        });
-
-                        cb(allSteps);
+                        cb(matched.steps);
                     }
-                    // removed onRouteLoaded call to keep simulation on the GPX trace
                 }
             } catch (err) {
                 console.error("Failed to load directions:", err);

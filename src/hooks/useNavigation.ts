@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { playWarningChime, playTurnChime, playOffRouteAlert } from '../utils/audio';
 
 interface NavigationState {
     currentStep: any | null;
@@ -7,6 +8,7 @@ interface NavigationState {
     distanceToNext: number;
     currentInstruction: string | null;
     isNavigating: boolean;
+    isOffRoute: boolean;
 }
 
 export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true) => {
@@ -16,10 +18,12 @@ export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true)
         distanceToNext: Infinity,
         currentInstruction: null,
         isNavigating: false,
+        isOffRoute: false,
     });
 
     const lastUserLocation = useRef<{ lat: number, lng: number, timestamp: number } | null>(null);
-    const lastAnnouncedStepIndex = useRef<number>(-1);
+    const announcedStagesRef = useRef<Record<number, Set<number>>>({}); // { stepIndex: Set(50, 10) }
+    const lastOffRouteTimeRef = useRef<number>(0);
     const speedRef = useRef<number>(0); // km/h
 
     const updateLocation = (lat: number, lng: number) => {
@@ -42,24 +46,11 @@ export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true)
         }
         lastUserLocation.current = { lat, lng, timestamp: now };
 
-        // Find closest step (simplified logic: look for the next uncompleted step)
-        // Ideally we project user to route line, but for now we check distance to step maneuvers
-
+        // Search window to pick current step (same as before)
         let nearestStepIndex = -1;
         let minDistance = Infinity;
-
-        // Strategy to fix Loop Course Bug:
-        // Only search for the next few steps relative to the last one we passed.
-        // This prevents the "destination" (Step N) from being picked when we are at the "start" (Step 0),
-        // even though they are at the same location.
-
-        // Start from the last announced step (or 0)
-        let searchStartIndex = Math.max(0, lastAnnouncedStepIndex.current);
-
-        // If we are just starting (index 0 or -1), and it's a loop, 
-        // the last step is also a candidate if we search the whole array.
-        // So effectively restrict the search window.
-        // A window of 10 steps should be enough for any reasonable detour or long segment.
+        let lastPassedIndex = Object.keys(announcedStagesRef.current).reduce((max, idx) => Math.max(max, parseInt(idx)), -1);
+        let searchStartIndex = Math.max(0, lastPassedIndex);
         let searchEndIndex = Math.min(routeSteps.length, searchStartIndex + 10);
 
         for (let i = searchStartIndex; i < searchEndIndex; i++) {
@@ -75,27 +66,42 @@ export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true)
             }
         }
 
+        // Off-Route Detection (25m Threshold for stability)
+        const isOffRoute = minDistance > 25;
+        if (isOffRoute && now - lastOffRouteTimeRef.current > 10000) { // Every 10s
+            playOffRouteAlert();
+            lastOffRouteTimeRef.current = now;
+        }
+
         if (nearestStepIndex !== -1) {
             const step = routeSteps[nearestStepIndex];
             const nextStep = routeSteps[nearestStepIndex + 1] || null;
 
-            // Voice/Sound Announcement Logic
-            // Timing depends on speed
-            const isHighSpeed = speedRef.current > 15;
-            const threshold = isHighSpeed ? 200 : 80; // meters (Increased from 150/50 for better matching tolerance)
+            // Specific Sound Triggers (50m, 10m)
+            if (nextStep) {
+                const nextStepLoc = new mapboxgl.LngLat(
+                    nextStep.maneuver.location[0],
+                    nextStep.maneuver.location[1]
+                );
+                const distToTurn = userLoc.distanceTo(nextStepLoc);
 
-            const shouldAnnounce = minDistance < threshold;
+                if (!announcedStagesRef.current[nearestStepIndex + 1]) {
+                    announcedStagesRef.current[nearestStepIndex + 1] = new Set();
+                }
+                const stages = announcedStagesRef.current[nearestStepIndex + 1];
 
-            // Debug Log
-            // console.log(`Nav: nearest=${nearestStepIndex}, dist=${Math.round(minDistance)}m, threshold=${threshold}m, last=${lastAnnouncedStepIndex.current}`);
-
-            // Trigger announcement if new step
-            if (shouldAnnounce && nearestStepIndex !== lastAnnouncedStepIndex.current) {
-                // Update state
-                lastAnnouncedStepIndex.current = nearestStepIndex;
-                // The instruction implies setting currentStep here, but the original code
-                // updates the state object at the end of the function.
-                // We'll keep the state update consolidated.
+                // Stage 1: 50m warning (1 beep)
+                if (distToTurn <= 55 && distToTurn > 30 && !stages.has(50)) {
+                    playWarningChime();
+                    stages.add(50);
+                    console.log('[Nav] 50m Beep for step', nearestStepIndex + 1);
+                }
+                // Stage 2: 10m immediate (2 beeps)
+                if (distToTurn <= 15 && distToTurn > 0 && !stages.has(10)) {
+                    playTurnChime();
+                    stages.add(10);
+                    console.log('[Nav] 10m Double Beep for step', nearestStepIndex + 1);
+                }
             }
 
             setState(prev => ({
@@ -103,21 +109,21 @@ export const useNavigation = (routeSteps: any[], isVoiceEnabled: boolean = true)
                 currentStep: step,
                 nextStep: nextStep,
                 distanceToNext: minDistance,
-                currentInstruction: step.maneuver.instruction
+                currentInstruction: step.maneuver.instruction,
+                isOffRoute
             }));
         }
     };
 
     const startNavigation = () => {
         console.log("Starting Navigation");
-        lastAnnouncedStepIndex.current = -1;
-        setState(prev => ({ ...prev, isNavigating: true }));
+        announcedStagesRef.current = {};
+        setState(prev => ({ ...prev, isNavigating: true, isOffRoute: false }));
     };
 
     const stopNavigation = () => {
         console.log("Stopping Navigation");
-        lastAnnouncedStepIndex.current = -1;
-        setState(prev => ({ ...prev, isNavigating: false, currentStep: null }));
+        setState(prev => ({ ...prev, isNavigating: false, currentStep: null, isOffRoute: false }));
     };
 
     return {
