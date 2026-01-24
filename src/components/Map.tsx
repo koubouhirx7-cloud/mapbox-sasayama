@@ -9,9 +9,10 @@ const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
 
 interface MapProps {
     onStepsChange?: (steps: any[]) => void;
+    activeRoute: 'recommended' | 'gpx';
 }
 
-const Map: React.FC<MapProps> = ({ onStepsChange }) => {
+const Map: React.FC<MapProps> = ({ onStepsChange, activeRoute }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const [error, setError] = React.useState<string | null>(null);
@@ -180,7 +181,7 @@ const Map: React.FC<MapProps> = ({ onStepsChange }) => {
                 className="w-full h-full min-h-[400px]"
                 style={{ position: 'absolute', top: 0, bottom: 0, width: '100%' }}
             />
-            {mapInstance && <GpxRouteLayer map={mapInstance} />}
+            {mapInstance && <GpxRouteLayer map={mapInstance} isVisible={activeRoute === 'gpx'} />}
         </div>
     );
 };

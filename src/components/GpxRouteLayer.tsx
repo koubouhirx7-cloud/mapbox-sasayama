@@ -4,13 +4,22 @@ import courseData from '../data/course.json';
 
 interface GpxRouteLayerProps {
     map: mapboxgl.Map;
+    isVisible: boolean;
 }
 
-const GpxRouteLayer: React.FC<GpxRouteLayerProps> = ({ map }) => {
+const GpxRouteLayer: React.FC<GpxRouteLayerProps> = ({ map, isVisible }) => {
     const animationRef = useRef<number>();
 
     useEffect(() => {
         if (!map) return;
+
+        // Toggle visibility immediately if layers exist
+        const layers = ['gpx-route-line', 'gpx-route-arrows'];
+        layers.forEach(id => {
+            if (map.getLayer(id)) {
+                map.setLayoutProperty(id, 'visibility', isVisible ? 'visible' : 'none');
+            }
+        });
 
         const addLayers = () => {
             if (map.getSource('gpx-route')) return;

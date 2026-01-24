@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import Map from './components/Map'
 import NavigationPanel from './components/NavigationPanel'
+import RouteSelector from './components/RouteSelector'
+
+type RouteType = 'recommended' | 'gpx';
 
 function App() {
     const [steps, setSteps] = useState<any[]>([])
+    const [activeRoute, setActiveRoute] = useState<RouteType>('recommended')
 
     return (
         <div className="flex flex-col w-screen h-screen bg-satoyama-mist font-sans">
@@ -15,7 +19,7 @@ function App() {
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2D5A27; }
                 `}
             </style>
-            <header className="bg-satoyama-forest text-satoyama-mist py-4 px-6 shadow-lg z-40 flex items-center justify-between">
+            <header className="bg-satoyama-forest text-satoyama-mist py-4 px-6 shadow-lg z-50 flex items-center justify-between">
                 <div>
                     <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
                         <span className="w-8 h-8 bg-satoyama-mist rounded-lg flex items-center justify-center text-satoyama-forest">🚲</span>
@@ -27,8 +31,19 @@ function App() {
                 </div>
             </header>
             <main className="relative flex-grow">
-                <NavigationPanel steps={steps} />
-                <Map onStepsChange={setSteps} />
+                <RouteSelector
+                    activeRoute={activeRoute}
+                    onRouteSelect={setActiveRoute}
+                />
+
+                {activeRoute === 'recommended' && (
+                    <NavigationPanel steps={steps} />
+                )}
+
+                <Map
+                    onStepsChange={setSteps}
+                    activeRoute={activeRoute}
+                />
             </main>
         </div>
     )
