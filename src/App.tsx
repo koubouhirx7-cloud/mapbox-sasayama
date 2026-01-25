@@ -25,7 +25,7 @@ function App() {
 
     // Navigation State
     const [routeSteps, setRouteSteps] = useState<any[]>([]);
-    const [routeGeometry, setRouteGeometry] = useState<any>(null); // New: Store geometry for simulation
+    const [routeSteps, setRouteSteps] = useState<any[]>([]);
 
     // ... (rest of hooks)
 
@@ -202,7 +202,7 @@ function App() {
                         // Ideally we pass a callback for full route data.
                     }}
                     // Enhanced prop to capture geometry
-                    onRouteLoaded={(route) => setRouteGeometry(route)}
+                    onRouteLoaded={() => { }}
                     onProximityChange={() => { }}
                 />
 

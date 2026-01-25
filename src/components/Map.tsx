@@ -417,13 +417,6 @@ const Map: React.FC<MapProps> = ({
         loadRoute();
     }, [activeRoute, targetRoute, mapInstance, selectionTimestamp]);
 
-    const toggle3D = () => {
-        if (!mapRef.current) return;
-        const targetPitch = is3D ? 0 : 60;
-        mapRef.current.easeTo({ pitch: targetPitch, duration: 1000 });
-        setIs3D(!is3D);
-    };
-
     const simulationMarkerRef = useRef<mapboxgl.Marker | null>(null);
 
     // Navigation View Lock (North Up + 45deg Tilt)
