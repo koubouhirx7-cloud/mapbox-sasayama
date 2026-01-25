@@ -40,20 +40,4 @@ export const spots: Spot[] = [
         googleMapsUrl: 'https://www.google.com/maps/place/Sasayama+Tamamizu+Lily+Garden/@35.082748,135.218022',
         description: '6月から7月にかけて色とりどりのユリとアジサイが咲き誇る美しい庭園。篠山城の井戸水の水源地でもあります。'
     },
-    {
-        id: 'odagaki-mamedo',
-        name: '小田垣豆堂',
-        category: 'cafe',
-        coordinates: [135.2215, 35.0722],
-        googleMapsUrl: 'https://www.google.com/maps/place/Odagaki+Mamedo/@35.0722,135.2215',
-        description: '創業280余年の黒豆商「小田垣商店」が運営するカフェ。歴史ある建築の中で、最高級の黒豆スイーツを楽しめます。'
-    },
-    {
-        id: 'kissa-oito',
-        name: '喫茶 Oito',
-        category: 'cafe',
-        coordinates: [135.2223, 35.0718],
-        googleMapsUrl: 'https://www.google.com/maps/place/Kissa+Oito/@35.0718,135.2223',
-        description: '城下町の町屋を改装した落ち着いた雰囲気のカフェ。地元の食材を使った料理やこだわりのコーヒーが人気です。'
-    }
 ];
