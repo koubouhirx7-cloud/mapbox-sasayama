@@ -58,6 +58,60 @@ const Map: React.FC<MapProps> = ({
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
     const [is3D, setIs3D] = useState(false);
 
+    // Refs for state access inside callbacks
+    const isNavigatingRef = useRef(isNavigating);
+    const lastUserLocationRef = useRef<{ lng: number, lat: number, heading: number } | null>(null);
+    const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
+
+    // Sync isNavigating ref and update marker
+    useEffect(() => {
+        isNavigatingRef.current = isNavigating;
+        updateUserMarker();
+    }, [isNavigating]);
+
+    // Function to update the custom user marker
+    const updateUserMarker = () => {
+        if (!mapRef.current) return;
+        const location = lastUserLocationRef.current;
+
+        if (isNavigatingRef.current && location) {
+            // Show/Update Arrow Marker
+            if (!userMarkerRef.current) {
+                const el = document.createElement('div');
+                el.className = 'user-marker-arrow';
+                el.innerHTML = `
+                <svg width="40" height="40" viewBox="0 0 100 100" style="display:block;">
+                    <filter id="shadow-user" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.3)"/>
+                    </filter>
+                    <circle cx="50" cy="50" r="20" fill="#007cbf" stroke="white" stroke-width="2" style="opacity: 0.3"/>
+                    <path d="M50 15 L85 85 L50 70 L15 85 Z" fill="#FF8C00" stroke="white" stroke-width="4" filter="url(#shadow-user)" />
+                </svg>
+                `;
+                el.style.width = '40px';
+                el.style.height = '40px';
+
+                userMarkerRef.current = new mapboxgl.Marker({
+                    element: el,
+                    rotationAlignment: 'map',
+                    pitchAlignment: 'map'
+                })
+                    .setLngLat([location.lng, location.lat])
+                    .setRotation(location.heading)
+                    .addTo(mapRef.current);
+            } else {
+                userMarkerRef.current.setLngLat([location.lng, location.lat]);
+                userMarkerRef.current.setRotation(location.heading);
+            }
+        } else {
+            // Hide/Remove Arrow Marker
+            if (userMarkerRef.current) {
+                userMarkerRef.current.remove();
+                userMarkerRef.current = null;
+            }
+        }
+    };
+
     // Refs for callbacks to avoid stale closures in Mapbox event listeners
     const onUserLocationChangeRef = useRef(onUserLocationChange);
     const onStepsChangeRef = useRef(onStepsChange);
@@ -153,10 +207,20 @@ const Map: React.FC<MapProps> = ({
                         const cb = onUserLocationChangeRef.current;
                         if (cb) cb(position.coords.latitude, position.coords.longitude);
 
-                        // Update heading ref
-                        if (position.coords.heading !== null && position.coords.heading !== undefined) {
-                            currentHeadingRef.current = position.coords.heading;
-                        }
+                        // Update heading ref & last location
+                        const heading = (position.coords.heading !== null && position.coords.heading !== undefined)
+                            ? position.coords.heading
+                            : 0;
+
+                        currentHeadingRef.current = heading;
+                        lastUserLocationRef.current = {
+                            lng: position.coords.longitude,
+                            lat: position.coords.latitude,
+                            heading: heading
+                        };
+
+                        // Update marker immediately
+                        updateUserMarker();
                     });
 
                     geolocate.on('error', (e: any) => {
