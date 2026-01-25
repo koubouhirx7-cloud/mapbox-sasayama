@@ -3,11 +3,13 @@ import { ExplorationRoute } from '../data/explorationRoutes';
 
 interface CourseInfoPanelProps {
     route: ExplorationRoute;
+    isNavigating?: boolean;
     onStart?: () => void;
+    onStop?: () => void;
     className?: string;
 }
 
-const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStart, className = '' }) => {
+const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, isNavigating = false, onStart, onStop, className = '' }) => {
     const [isExpanded, setIsExpanded] = useState(true);
 
     return (
@@ -75,12 +77,27 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStart, class
 
                             <button
                                 onClick={() => {
-                                    if (onStart) onStart();
-                                    setIsExpanded(false);
+                                    if (isNavigating) {
+                                        if (onStop) onStop();
+                                    } else {
+                                        if (onStart) onStart();
+                                        setIsExpanded(false);
+                                    }
                                 }}
-                                className="w-full py-3 bg-satoyama-forest text-white rounded-lg font-bold text-xl shadow-md hover:bg-[#1a3815] transition-colors flex items-center justify-center gap-2 border-t border-white/10"
+                                className={`w-full py-3 rounded-lg font-bold text-xl shadow-md transition-colors flex items-center justify-center gap-2 border-t border-white/10 ${isNavigating
+                                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                                        : 'bg-satoyama-forest hover:bg-[#1a3815] text-white'
+                                    }`}
                             >
-                                <span className="text-xs">▶</span> START
+                                {isNavigating ? (
+                                    <>
+                                        <span className="text-xs">■</span> STOP
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="text-xs">▶</span> START
+                                    </>
+                                )}
                             </button>
                         </div>
                     )}
