@@ -2247,21 +2247,6 @@
             "type": "Feature",
             "properties": {
                 "type": "spot",
-                "name": "丹波並木道中央公園サイクルステーション",
-                "description": "旅のスタートはこちらから。<br>シャワーブース、着替えスペースもしっかり確保されています。"
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    135.1613992,
-                    35.0749196
-                ]
-            }
-        },
-        {
-            "type": "Feature",
-            "properties": {
-                "type": "spot",
                 "name": "一面美しい田園風景が広がる写真スポット",
                 "description": ""
             },
