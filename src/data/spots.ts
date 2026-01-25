@@ -1,0 +1,67 @@
+export interface Spot {
+    id: string;
+    name: string;
+    category: 'sightseeing' | 'cafe' | 'experience';
+    coordinates: [number, number]; // [lng, lat]
+    googleMapsUrl: string;
+    description: string;
+}
+
+export const spots: Spot[] = [
+    {
+        id: 'sasayama-castle',
+        name: '篠山城跡 (大書院)',
+        category: 'sightseeing',
+        coordinates: [135.2177341, 35.07324795],
+        googleMapsUrl: 'https://www.google.com/maps/place/Sasayama+Castle+Oshoin/@35.07324795,135.2177341',
+        description: '徳川家康の命により築城された名城。復元された大書院は木造建築として国内最大級の規模を誇ります。'
+    },
+    {
+        id: 'kawaramachi-merchant',
+        name: '河原町妻入商家群',
+        category: 'sightseeing',
+        coordinates: [135.224722, 35.071667],
+        googleMapsUrl: 'https://www.google.com/maps/place/Kawaramachi+Merchant+District/@35.071667,135.224722',
+        description: '江戸時代の面影を残す歴史的な町並み。妻入り様式の商家が立ち並び、国の重要伝統的建造物群保存地区に選定されています。'
+    },
+    {
+        id: 'tachikui-pottery',
+        name: '丹波伝統工芸公園 陶の郷',
+        category: 'experience',
+        coordinates: [135.131611, 34.981028],
+        googleMapsUrl: 'https://www.google.com/maps/place/Tamba+Traditional+Craft+Park+Sue+no+Sato/@34.981028,135.131611',
+        description: '日本六古窯の一つ、丹波焼をテーマにした公園。陶芸体験や窯元巡りの拠点として最適です。'
+    },
+    {
+        id: 'sasayama-tamamizu',
+        name: '篠山玉水ゆり園',
+        category: 'sightseeing',
+        coordinates: [135.218022, 35.082748],
+        googleMapsUrl: 'https://www.google.com/maps/place/Sasayama+Tamamizu+Lily+Garden/@35.082748,135.218022',
+        description: '6月から7月にかけて色とりどりのユリとアジサイが咲き誇る美しい庭園。篠山城の井戸水の水源地でもあります。'
+    },
+    {
+        id: 'odagaki-mamedo',
+        name: '小田垣豆堂',
+        category: 'cafe',
+        coordinates: [135.2215, 35.0722],
+        googleMapsUrl: 'https://www.google.com/maps/place/Odagaki+Mamedo/@35.0722,135.2215',
+        description: '創業280余年の黒豆商「小田垣商店」が運営するカフェ。歴史ある建築の中で、最高級の黒豆スイーツを楽しめます。'
+    },
+    {
+        id: 'kissa-oito',
+        name: '喫茶 Oito',
+        category: 'cafe',
+        coordinates: [135.2223, 35.0718],
+        googleMapsUrl: 'https://www.google.com/maps/place/Kissa+Oito/@35.0718,135.2223',
+        description: '城下町の町屋を改装した落ち着いた雰囲気のカフェ。地元の食材を使った料理やこだわりのコーヒーが人気です。'
+    },
+    {
+        id: 'futaba-cafe',
+        name: 'ふたばカフェ',
+        category: 'cafe',
+        coordinates: [135.1652, 35.0440],
+        googleMapsUrl: 'https://www.google.com/maps/place/Futaba+Cafe/@35.0440,135.1652',
+        description: '自家栽培の野菜をふんだんに使ったランチやスイーツが自慢のカフェ。里山の豊かな自然を感じながら食事ができます。'
+    }
+];

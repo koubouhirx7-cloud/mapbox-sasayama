@@ -6,6 +6,7 @@ import GpxRouteLayer from './GpxRouteLayer';
 import courseData from '../data/course.json';
 import { explorationRoutes } from '../data/explorationRoutes';
 import { getMatchedRoute } from '../utils/mapMatching';
+import { spots, Spot } from '../data/spots';
 
 const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
 
@@ -50,6 +51,7 @@ const Map: React.FC<MapProps> = ({
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const markersRef = useRef<mapboxgl.Marker[]>([]);
+    const spotMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
     const [is3D, setIs3D] = useState(false);
@@ -243,16 +245,32 @@ const Map: React.FC<MapProps> = ({
                         });
                     });
 
-                    // Markers for standard locations (Removed as per user request)
-                    /* 
-                    locationData.features.forEach((feature: any) => {
-                        const coords = feature.geometry.coordinates as [number, number];
-                        new mapboxgl.Marker({ color: '#2D5A27' })
-                            .setLngLat(coords)
-                            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<h3>${feature.properties.name}</h3><p>${feature.properties.description}</p>`))
+                    // 5. Sightseeing Spots & Cafes Markers
+                    spots.forEach((spot: Spot) => {
+                        const markerColor = spot.category === 'cafe' ? '#D84315' :
+                            spot.category === 'experience' ? '#AD1457' : '#2D5A27';
+
+                        const popupContent = `
+                            <div class="p-3 max-w-[200px] font-sans">
+                                <h3 class="text-sm font-bold text-[#2D5A27] mb-1">${spot.name}</h3>
+                                <p class="text-xs text-gray-600 mb-2 leading-tight">${spot.description}</p>
+                                <a href="${spot.googleMapsUrl}" target="_blank" rel="noopener noreferrer" 
+                                   class="inline-block w-full text-center bg-[#2D5A27] text-white text-[10px] py-1.5 rounded shadow-sm hover:bg-[#1B3617] transition-colors">
+                                    Googleマップで見る
+                                </a>
+                            </div>
+                        `;
+
+                        const popup = new mapboxgl.Popup({ offset: 35, maxWidth: '250px' })
+                            .setHTML(popupContent);
+
+                        const marker = new mapboxgl.Marker({ color: markerColor })
+                            .setLngLat(spot.coordinates)
+                            .setPopup(popup)
                             .addTo(map);
+
+                        spotMarkersRef.current.push(marker);
                     });
-                    */
                 });
 
             } catch (e) {
