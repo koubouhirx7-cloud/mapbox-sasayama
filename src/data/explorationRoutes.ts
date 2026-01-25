@@ -12,7 +12,7 @@ export interface ExplorationRoute {
     name: string;
     startPoint: [number, number]; // [lng, lat]
     color: string;
-    category: 'route' | 'area';
+    category: 'route' | 'area' | 'none';
     data?: any;
     distance?: number; // km
     description?: string;
@@ -24,7 +24,7 @@ export const explorationRoutes: ExplorationRoute[] = [
         name: '--- コースを選択してください ---',
         startPoint: [135.2166, 35.0755],
         color: '#ffffff00',
-        category: 'route',
+        category: 'none',
         description: '左側のメニューまたはエリアガイドから、探索したいコースを選択してください。'
     },
     {

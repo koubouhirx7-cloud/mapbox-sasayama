@@ -134,7 +134,7 @@ function App() {
                             <span className="text-lg">🚲</span> サイクリングコース
                         </h2>
                         <div className="space-y-3">
-                            {explorationRoutes.filter(r => r.category === 'route' && r.id !== 'none').map((route) => (
+                            {explorationRoutes.filter(r => r.category === 'route').map((route) => (
                                 <button
                                     key={route.id}
                                     onClick={() => {
@@ -192,7 +192,7 @@ function App() {
             <main className="flex-grow relative h-full">
 
 
-                {selectedRoute && selectedRoute.id !== 'none' && (
+                {selectedRoute && selectedRoute.category === 'route' && (
                     <CourseInfoPanel
                         route={selectedRoute}
                         isSimulating={isSimulating}

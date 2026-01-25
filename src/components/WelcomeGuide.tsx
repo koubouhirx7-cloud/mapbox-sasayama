@@ -20,7 +20,7 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
             const routeDistances: { route: ExplorationRoute, dist: number }[] = [];
 
             routes.forEach(route => {
-                if (route.category !== 'route' || route.id === 'none') return; // Only suggest real routes
+                if (route.category !== 'route') return; // Only suggest real routes
 
                 // Calculate distance using utility (no mapbox-gl required)
                 // route.startPoint is [lng, lat], userLocation is {lat, lng}
@@ -49,7 +49,7 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
             const timer = setTimeout(() => {
                 setIsLocating(false);
                 // Fallback to first 2 routes
-                setRecommendedRoutes(routes.filter(r => r.category === 'route' && r.id !== 'none').slice(0, 2));
+                setRecommendedRoutes(routes.filter(r => r.category === 'route').slice(0, 2));
             }, 3000);
             return () => clearTimeout(timer);
         }
