@@ -45,16 +45,17 @@ const GpxRouteLayer: React.FC<GpxRouteLayerProps> = ({ map, isVisible, onRouteLo
                         const p1 = coords[i];
                         const p2 = coords[i + 1];
                         const dEle = (p2[2] || 0) - (p1[2] || 0);
-                        const dist = Math.sqrt(Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1] - p1[1], 2));
-                        const slope = dist > 0 ? dEle / (dist * 111000) : 0;
+                        const dist = Math.sqrt(Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1] - p1[1], 2)) * 111000;
+                        const slope = dist > 5 ? dEle / dist : 0;
 
                         let category = 'flat';
-                        if (slope > 0.02) category = 'uphill';
-                        else if (slope < -0.02) category = 'downhill';
+                        if (slope > 0.05) category = 'steep';
+                        else if (slope > 0.02) category = 'moderate';
+                        else if (slope < -0.05) category = 'downhill';
 
                         features.push({
                             type: 'Feature',
-                            properties: { category },
+                            properties: { category, slope },
                             geometry: {
                                 type: 'LineString',
                                 coordinates: [p1, p2]
@@ -76,14 +77,15 @@ const GpxRouteLayer: React.FC<GpxRouteLayerProps> = ({ map, isVisible, onRouteLo
                         source: 'gpx-route',
                         layout: { 'line-join': 'round', 'line-cap': 'round' },
                         paint: {
-                            'line-width': 10,
+                            'line-width': 8,
                             'line-color': [
                                 'match', ['get', 'category'],
-                                'uphill', '#FF4B2B',
-                                'downhill', '#2BB0FF',
-                                '#2D5A27'
+                                'steep', '#D32F2F',    // Red
+                                'moderate', '#F57C00', // Orange
+                                'downhill', '#1E88E5', // Blue
+                                '#2D5A27'            // Green
                             ],
-                            'line-opacity': 0.8
+                            'line-opacity': 0.9
                         }
                     });
 
