@@ -142,7 +142,7 @@ export const explorationRoutes: ExplorationRoute[] = [
     {
         id: 'nishiki-area',
         name: '西紀エリア',
-        startPoint: [135.161, 35.075],
+        startPoint: [135.1796, 35.0940],
         color: '#8E24AA',
         category: 'area',
         description: '美しい自然と山里の風景が広がる西紀エリア。サイクリングや自然散策に最適です。'
