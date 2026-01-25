@@ -216,6 +216,10 @@ function App() {
                             setShowWelcome(false);
                         }}
                         onClose={() => setShowWelcome(false)}
+                        onViewAllCourses={() => {
+                            setShowWelcome(false);
+                            setIsSidebarOpen(true);
+                        }}
                     />
                 )}
             </main>

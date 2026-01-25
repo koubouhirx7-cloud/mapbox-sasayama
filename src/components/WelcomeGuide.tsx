@@ -7,9 +7,10 @@ interface WelcomeGuideProps {
     routes: ExplorationRoute[];
     onSelectRoute: (routeId: string) => void;
     onClose: () => void;
+    onViewAllCourses?: () => void;
 }
 
-const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSelectRoute, onClose }) => {
+const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSelectRoute, onClose, onViewAllCourses }) => {
     const [recommendedRoutes, setRecommendedRoutes] = useState<ExplorationRoute[]>([]);
     const [distances, setDistances] = useState<{ [key: string]: number }>({});
     const [isLocating, setIsLocating] = useState(true);
@@ -138,7 +139,13 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
                 {/* Footer */}
                 <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-center">
                     <button
-                        onClick={onClose}
+                        onClick={() => {
+                            if (onViewAllCourses) {
+                                onViewAllCourses();
+                            } else {
+                                onClose();
+                            }
+                        }}
                         className="text-satoyama-leaf text-sm font-bold hover:text-satoyama-forest transition-colors underline decoration-dotted underline-offset-4"
                     >
                         すべてのコースを地図で見る
