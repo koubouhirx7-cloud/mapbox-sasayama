@@ -65,15 +65,6 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, isNavigating =
 
                     {route.category !== 'none' && (
                         <div className="space-y-3">
-                            <button
-                                onClick={() => {
-                                    // setIsExpanded(false); // Maybe keep open? Or close. 
-                                    // For now let's just keep the original selection behavior
-                                }}
-                                className="w-full py-3 bg-satoyama-forest/90 text-white rounded-lg font-bold text-md shadow-sm hover:bg-satoyama-forest transition-colors flex items-center justify-center gap-2 mb-1 opacity-90"
-                            >
-                                🚲 このルートを選ぶ
-                            </button>
 
                             <button
                                 onClick={() => {
