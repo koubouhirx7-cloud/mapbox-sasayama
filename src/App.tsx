@@ -11,7 +11,7 @@ import { getDistance } from './utils/distance'
 type RouteType = 'sasayama-main' | string;
 
 function App() {
-    const [activeRoute, setActiveRoute] = useState<RouteType>('sasayama-main')
+    const [activeRoute, setActiveRoute] = useState<RouteType>('none')
     const [selectionTimestamp, setSelectionTimestamp] = useState<number>(0);
 
     // Debug: Trace route changes
@@ -134,7 +134,7 @@ function App() {
                             <span className="text-lg">🚲</span> サイクリングコース
                         </h2>
                         <div className="space-y-3">
-                            {explorationRoutes.filter(r => r.category === 'route').map((route) => (
+                            {explorationRoutes.filter(r => r.category === 'route' && r.id !== 'none').map((route) => (
                                 <button
                                     key={route.id}
                                     onClick={() => {
@@ -192,7 +192,7 @@ function App() {
             <main className="flex-grow relative h-full">
 
 
-                {selectedRoute && (
+                {selectedRoute && selectedRoute.id !== 'none' && (
                     <CourseInfoPanel
                         route={selectedRoute}
                         isSimulating={isSimulating}

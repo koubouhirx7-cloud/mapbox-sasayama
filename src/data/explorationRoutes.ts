@@ -20,6 +20,14 @@ export interface ExplorationRoute {
 
 export const explorationRoutes: ExplorationRoute[] = [
     {
+        id: 'none',
+        name: '--- コースを選択してください ---',
+        startPoint: [135.2166, 35.0755],
+        color: '#ffffff00',
+        category: 'route',
+        description: '左側のメニューまたはエリアガイドから、探索したいコースを選択してください。'
+    },
+    {
         id: 'sasayama-main',
         name: '味間ルート (丹波篠山茶の里)',
         startPoint: [135.16195, 35.0747],
