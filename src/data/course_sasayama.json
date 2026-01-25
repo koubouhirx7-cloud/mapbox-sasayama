@@ -1439,20 +1439,6 @@
                     ]
                 ]
             }
-        },
-        {
-            "type": "Feature",
-            "properties": {
-                "name": "大國寺",
-                "type": "checkpoint"
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    135.15026,
-                    35.0167
-                ]
-            }
         }
     ]
 }
