@@ -77,10 +77,8 @@ const Map: React.FC<MapProps> = ({
         onRouteLoadedRef.current = onRouteLoaded;
     }, [onUserLocationChange, onStepsChange, onRouteLoaded]);
 
-    // Area Polygons
-    const sasayamaStationPoly = createGeoJSONCircle([135.1834, 35.0583], 0.8); // 800m radius
-    // Jokamachi Area (Simple estimation based on request)
-    const jokamachiPoly = createGeoJSONCircle([135.2166, 35.0755], 0.6); // Approx area for castle town
+    // Areas to be rendered as polygons
+    const areas = explorationRoutes.filter(r => r.category === 'area');
 
     useEffect(() => {
         const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -174,37 +172,29 @@ const Map: React.FC<MapProps> = ({
                         }
                     }, 1000);
 
-                    // 4. Area Overlays
-                    // Sasayamaguchi Station Area
-                    map.addSource('area-station', {
-                        type: 'geojson',
-                        data: {
-                            type: 'Feature',
-                            properties: { title: '篠山口駅エリア' },
-                            geometry: { type: 'Polygon', coordinates: [sasayamaStationPoly] }
-                        }
-                    });
-                    map.addLayer({
-                        id: 'area-station-fill',
-                        type: 'fill',
-                        source: 'area-station',
-                        paint: { 'fill-color': '#FF8C00', 'fill-opacity': 0.2 }
-                    });
+                    // 4. Area Overlays (Dynamic)
+                    areas.forEach(area => {
+                        const sourceId = `area-${area.id}`;
+                        const polygon = createGeoJSONCircle(area.startPoint, 1.2); // Balanced radius for areas
 
-                    // Jokamachi Area
-                    map.addSource('area-jokamachi', {
-                        type: 'geojson',
-                        data: {
-                            type: 'Feature',
-                            properties: { title: '城下町エリア' },
-                            geometry: { type: 'Polygon', coordinates: [jokamachiPoly] }
-                        }
-                    });
-                    map.addLayer({
-                        id: 'area-jokamachi-fill',
-                        type: 'fill',
-                        source: 'area-jokamachi',
-                        paint: { 'fill-color': '#800000', 'fill-opacity': 0.2 }
+                        map.addSource(sourceId, {
+                            type: 'geojson',
+                            data: {
+                                type: 'Feature',
+                                properties: { title: area.name },
+                                geometry: { type: 'Polygon', coordinates: [polygon] }
+                            }
+                        });
+
+                        map.addLayer({
+                            id: `${sourceId}-fill`,
+                            type: 'fill',
+                            source: sourceId,
+                            paint: {
+                                'fill-color': area.color || '#2D5A27',
+                                'fill-opacity': 0.2
+                            }
+                        });
                     });
 
                     // Interactions (Popup & FlyTo)
@@ -228,19 +218,21 @@ const Map: React.FC<MapProps> = ({
                             .addTo(map);
                     };
 
-                    ['area-station-fill', 'area-jokamachi-fill'].forEach(layer => {
-                        map.on('mousemove', layer, (e) => {
+                    const areaLayerIds = areas.map(area => `area-${area.id}-fill`);
+
+                    areaLayerIds.forEach(layerId => {
+                        map.on('mousemove', layerId, (e) => {
                             map.getCanvas().style.cursor = 'pointer';
                             showPopup(e);
                         });
-                        map.on('mouseleave', layer, () => {
+                        map.on('mouseleave', layerId, () => {
                             map.getCanvas().style.cursor = '';
                             if (hoverPopup) {
                                 hoverPopup.remove();
                                 hoverPopup = null;
                             }
                         });
-                        map.on('click', layer, (e) => {
+                        map.on('click', layerId, (e) => {
                             map.flyTo({ center: e.lngLat, zoom: 15, duration: 1500 });
                         });
                     });
