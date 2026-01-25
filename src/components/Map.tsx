@@ -52,7 +52,7 @@ const Map: React.FC<MapProps> = ({
 }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
-    const markersRef = useRef<mapboxgl.Marker[]>([]);
+    // markersRef removed
     const spotMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);

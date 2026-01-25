@@ -25,7 +25,6 @@ function App() {
 
     // Navigation State
     const [routeSteps, setRouteSteps] = useState<any[]>([]);
-    const [routeSteps, setRouteSteps] = useState<any[]>([]);
 
     // ... (rest of hooks)
 
