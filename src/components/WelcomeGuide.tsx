@@ -87,9 +87,9 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
                     >
                         ✕
                     </button>
-                    <h2 className="text-3xl font-bold font-outfit relative z-10">ようこそ！</h2>
+                    <h2 className="text-3xl font-bold font-outfit relative z-10">ようこそ、丹波篠山へ！</h2>
                     <p className="text-white/80 text-sm mt-1 relative z-10">
-                        {userLocation ? '現在地に基づいたおすすめのコース：' : 'おすすめのコース：'}
+                        おすすめのコースをご案内いたします。
                     </p>
                 </div>
 
