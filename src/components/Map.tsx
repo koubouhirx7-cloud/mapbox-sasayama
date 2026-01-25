@@ -63,6 +63,9 @@ const Map: React.FC<MapProps> = ({
     const onStepsChangeRef = useRef(onStepsChange);
     const onRouteLoadedRef = useRef(onRouteLoaded);
 
+    // Track user heading
+    const currentHeadingRef = useRef<number>(0);
+
     // Track initial zoom for simulation
     const hasInitialZoomedRef = useRef(false);
     // Track previous navigation state to detect STOP
@@ -149,6 +152,11 @@ const Map: React.FC<MapProps> = ({
                     geolocate.on('geolocate', (position: any) => {
                         const cb = onUserLocationChangeRef.current;
                         if (cb) cb(position.coords.latitude, position.coords.longitude);
+
+                        // Update heading ref
+                        if (position.coords.heading !== null && position.coords.heading !== undefined) {
+                            currentHeadingRef.current = position.coords.heading;
+                        }
                     });
 
                     geolocate.on('error', (e: any) => {
@@ -364,65 +372,71 @@ const Map: React.FC<MapProps> = ({
         const shouldSnap = isMoving || (isNavigating && !hasSnappedToNavRef.current);
 
         if (shouldSnap) {
-            // Force North Up and 45deg Tilt while moving
-            const options: any = {
-                bearing: 0,
-                pitch: 45,
-                duration: 500
-            };
+            if (shouldSnap) {
+                // Force North Up and 45deg Tilt while moving, OR Heading Up if available
+                // Use current heading if we are navigating and moving
+                const targetBearing = (isNavigating && speed > 0 && currentHeadingRef.current)
+                    ? currentHeadingRef.current
+                    : 0;
 
-            // Force Zoom 16.5 (~200m) only on the VERY FIRST detection of movement or nav start
-            if (!hasSnappedToNavRef.current) {
-                options.zoom = 16.5;
-                hasSnappedToNavRef.current = true;
-                console.log(`[Map] ${isNavigating ? 'Nav Start' : 'Movement'} detected. Snapping to Nav View (Zoom 16.5, North Up, 45 Tilt)`);
-            }
+                const options: any = {
+                    bearing: targetBearing,
+                    pitch: 45,
+                    duration: 500
+                };
 
-            if (!simulatedLocation) {
-                map.easeTo(options);
-            }
-        }
+                // Force Zoom 16.5 (~200m) only on the VERY FIRST detection of movement or nav start
+                if (!hasSnappedToNavRef.current) {
+                    options.zoom = 16.5;
+                    hasSnappedToNavRef.current = true;
+                    console.log(`[Map] ${isNavigating ? 'Nav Start' : 'Movement'} detected. Snapping to Nav View (Zoom 16.5, North Up, 45 Tilt)`);
+                }
 
-        // REVERT VIEW ON STOP
-        // If navigation was active and is now stopped
-        if (prevIsNavigatingRef.current === true && isNavigating === false) {
-            console.log('[Map] Navigation STOP detected. Reverting to Overview Mode.');
-            hasSnappedToNavRef.current = false; // Reset for next run
-
-            // Birds-eye view (Pitch 0, Bearing 0)
-            map.easeTo({
-                pitch: 0,
-                bearing: 0,
-                duration: 1000
-            });
-
-            // If a route/area is active, refit bounds to show the whole thing
-            const targetRoute = explorationRoutes.find(r => r.id === activeRoute);
-            if (targetRoute) {
-                if (targetRoute.data && targetRoute.category === 'route') {
-                    const bounds = new mapboxgl.LngLatBounds();
-                    targetRoute.data.features?.forEach((feature: any) => {
-                        if (feature.geometry.type === 'LineString') {
-                            feature.geometry.coordinates.forEach((coord: [number, number]) => {
-                                bounds.extend(coord);
-                            });
-                        }
-                    });
-
-                    if (!bounds.isEmpty()) {
-                        map.fitBounds(bounds, {
-                            padding: { top: 50, bottom: 200, left: 50, right: 50 },
-                            duration: 1500
-                        });
-                    }
-                } else {
-                    map.flyTo({ center: targetRoute.startPoint, zoom: 15, duration: 1500 });
+                if (!simulatedLocation) {
+                    map.easeTo(options);
                 }
             }
-        }
 
-        prevIsNavigatingRef.current = isNavigating;
-    }, [speed, isNavigating, simulatedLocation, activeRoute]);
+            // REVERT VIEW ON STOP
+            // If navigation was active and is now stopped
+            if (prevIsNavigatingRef.current === true && isNavigating === false) {
+                console.log('[Map] Navigation STOP detected. Reverting to Overview Mode.');
+                hasSnappedToNavRef.current = false; // Reset for next run
+
+                // Birds-eye view (Pitch 0, Bearing 0)
+                map.easeTo({
+                    pitch: 0,
+                    bearing: 0,
+                    duration: 1000
+                });
+
+                // If a route/area is active, refit bounds to show the whole thing
+                const targetRoute = explorationRoutes.find(r => r.id === activeRoute);
+                if (targetRoute) {
+                    if (targetRoute.data && targetRoute.category === 'route') {
+                        const bounds = new mapboxgl.LngLatBounds();
+                        targetRoute.data.features?.forEach((feature: any) => {
+                            if (feature.geometry.type === 'LineString') {
+                                feature.geometry.coordinates.forEach((coord: [number, number]) => {
+                                    bounds.extend(coord);
+                                });
+                            }
+                        });
+
+                        if (!bounds.isEmpty()) {
+                            map.fitBounds(bounds, {
+                                padding: { top: 50, bottom: 200, left: 50, right: 50 },
+                                duration: 1500
+                            });
+                        }
+                    } else {
+                        map.flyTo({ center: targetRoute.startPoint, zoom: 15, duration: 1500 });
+                    }
+                }
+            }
+
+            prevIsNavigatingRef.current = isNavigating;
+        }, [speed, isNavigating, simulatedLocation, activeRoute]);
 
     // Simulation Marker & Camera Follow
     useEffect(() => {
