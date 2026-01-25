@@ -63,7 +63,7 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, isNavigating =
                         {route.description || 'No description available.'}
                     </p>
 
-                    {route.category === 'route' && (
+                    {route.category !== 'none' && (
                         <div className="space-y-3">
                             <button
                                 onClick={() => {
@@ -85,8 +85,8 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, isNavigating =
                                     }
                                 }}
                                 className={`w-full py-3 rounded-lg font-bold text-xl shadow-md transition-colors flex items-center justify-center gap-2 border-t border-white/10 ${isNavigating
-                                        ? 'bg-red-600 hover:bg-red-700 text-white'
-                                        : 'bg-satoyama-forest hover:bg-[#1a3815] text-white'
+                                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                                    : 'bg-satoyama-forest hover:bg-[#1a3815] text-white'
                                     }`}
                             >
                                 {isNavigating ? (

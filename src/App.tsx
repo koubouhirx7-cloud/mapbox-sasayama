@@ -175,7 +175,7 @@ function App() {
                     />
                 )}
 
-                {selectedRoute && selectedRoute.category === 'route' && (
+                {selectedRoute && (selectedRoute.category === 'route' || selectedRoute.category === 'area') && (
                     <CourseInfoPanel
                         route={selectedRoute}
                         isNavigating={isNavigating}
