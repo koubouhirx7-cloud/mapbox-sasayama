@@ -89,25 +89,7 @@ const GpxRouteLayer: React.FC<GpxRouteLayerProps> = ({ map, isVisible, onRouteLo
                         }
                     });
 
-                    map.addLayer({
-                        id: 'gpx-route-arrows',
-                        type: 'symbol',
-                        source: 'gpx-route',
-                        layout: {
-                            'symbol-placement': 'line',
-                            'symbol-spacing': 50,
-                            'text-field': '▶',
-                            'text-size': 14,
-                            'text-keep-upright': false,
-                            'text-rotation-alignment': 'map',
-                            'text-allow-overlap': true,
-                            'text-ignore-placement': true
-                        },
-                        paint: {
-                            'text-color': '#FFFFFF',
-                            'text-opacity': 0.9
-                        }
-                    });
+
                 }
             } else {
                 // If source exists, we should update it if the route changed.

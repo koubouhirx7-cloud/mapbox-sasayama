@@ -19,6 +19,7 @@ interface MapProps {
     onRouteLoaded?: (route: any) => void;
     selectionTimestamp?: number;
     speed?: number;
+    isNavigating?: boolean;
 }
 
 // Helper to create a circle GeoJSON
@@ -46,7 +47,8 @@ const Map: React.FC<MapProps> = ({
     simulatedLocation,
     onRouteLoaded,
     selectionTimestamp,
-    speed = 0
+    speed = 0,
+    isNavigating = false
 }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -351,14 +353,15 @@ const Map: React.FC<MapProps> = ({
     const simulationMarkerRef = useRef<mapboxgl.Marker | null>(null);
 
     // Navigation View Lock (North Up + 45deg Tilt)
-    // Triggered when speed is detected
+    // Triggered when speed is detected OR navigation starts
     useEffect(() => {
         if (!mapRef.current) return;
         const map = mapRef.current;
 
         const isMoving = speed > 3; // Threshold: 3km/h
+        const shouldSnap = isMoving || (isNavigating && !hasSnappedToNavRef.current);
 
-        if (isMoving) {
+        if (shouldSnap) {
             // Force North Up and 45deg Tilt while moving
             // Note: We use easeTo with short duration to keep it smooth
             const options: any = {
@@ -367,21 +370,19 @@ const Map: React.FC<MapProps> = ({
                 duration: 500
             };
 
-            // Force Zoom 16.5 (~200m) only on the VERY FIRST detection of movement for this route
+            // Force Zoom 16.5 (~200m) only on the VERY FIRST detection of movement or nav start
             if (!hasSnappedToNavRef.current) {
                 options.zoom = 16.5;
                 hasSnappedToNavRef.current = true;
-                console.log('[Map] Movement detected. Snapping to Nav View (Zoom 16.5, North Up, 45 Tilt)');
+                console.log(`[Map] ${isNavigating ? 'Nav Start' : 'Movement'} detected. Snapping to Nav View (Zoom 16.5, North Up, 45 Tilt)`);
             }
 
-            // Only update camera if we are NOT simulating (simulation has its own loop)
+            // Only update camera if we are NOT simulating (simulation removed, but keeping logic clean)
             if (!simulatedLocation) {
-                // We don't center here because Mapbox's GeolocateControl (trackUserLocation) handles centering.
-                // However, we WANT to override bearing/pitch.
                 map.easeTo(options);
             }
         }
-    }, [speed, simulatedLocation]);
+    }, [speed, isNavigating, simulatedLocation]);
 
     // Simulation Marker & Camera Follow
     useEffect(() => {
@@ -457,16 +458,7 @@ const Map: React.FC<MapProps> = ({
         <div className="w-full h-full relative">
             <div ref={mapContainerRef} className="w-full h-full" />
 
-            {/* 5. 3D View Toggle Button */}
-            <div className="absolute top-24 right-2.5 z-10">
-                <button
-                    onClick={toggle3D}
-                    className="bg-[#F4F1E8] p-2 rounded-md shadow-md border border-[#2D5A27]/20 hover:bg-white transition-colors"
-                    title={is3D ? "2D View" : "3D View"}
-                >
-                    <span className="text-xl font-bold text-[#2D5A27]">{is3D ? "2D" : "3D"}</span>
-                </button>
-            </div>
+
 
             {mapInstance && targetRoute?.data && (
                 <GpxRouteLayer

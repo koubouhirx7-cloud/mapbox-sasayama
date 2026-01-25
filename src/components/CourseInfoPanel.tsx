@@ -3,18 +3,16 @@ import { ExplorationRoute } from '../data/explorationRoutes';
 
 interface CourseInfoPanelProps {
     route: ExplorationRoute;
-    onStartSimulation: () => void;
-    isSimulating: boolean;
-    speed: number;
-    onSpeedChange: (speed: number) => void;
+    onStart?: () => void;
     className?: string;
 }
 
-const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulation, isSimulating, speed, onSpeedChange, className = '' }) => {
+const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStart, className = '' }) => {
     const [isExpanded, setIsExpanded] = useState(true);
 
     return (
         <div className={`bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-2xl border border-satoyama-forest/10 max-w-sm md:max-w-md transition-all duration-300 ${className}`}>
+            <div className="text-[10px] text-red-500 opacity-50 absolute -top-4 left-0">DEBUG_ANTIGRAVITY</div>
             <div className="flex items-start justify-between gap-3 mb-1">
                 <div
                     className="flex-1 cursor-pointer"
@@ -23,10 +21,10 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulat
                     <h2 className="text-lg font-bold text-satoyama-forest leading-tight font-outfit pr-2">
                         {route.name}
                     </h2>
-                    {route.category === 'route' && route.distance && (
+                    {route.category === 'route' && (
                         <div className="flex items-center gap-2 mt-1 text-satoyama-leaf font-bold tracking-wide text-xs">
                             <span className="bg-satoyama-forest/10 px-2 py-0.5 rounded text-satoyama-forest">
-                                {route.distance} km
+                                {route.distance || '0'} km
                             </span>
                             <span>cycling course</span>
                         </div>
@@ -44,33 +42,16 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulat
                     >
                         {isExpanded ? (
                             // Chevron Down
-                            <svg className="w-4 h-4" fill="none" href="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                             </svg>
                         ) : (
                             // Chevron Up
-                            <svg className="w-4 h-4" fill="none" href="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" />
                             </svg>
                         )}
                     </button>
-                    {!isExpanded && route.category === 'route' && (
-                        <div className="flex gap-2 animate-fadeIn">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onStartSimulation();
-                                }}
-                                className={`px-4 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase shadow-sm transition-colors flex items-center gap-1
-                                    ${isSimulating
-                                        ? 'bg-red-500 text-white hover:bg-red-600'
-                                        : 'bg-satoyama-forest text-white hover:bg-[#1a3815]'
-                                    }`}
-                            >
-                                {isSimulating ? '⏹ Stop' : '▶ Start'}
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -80,50 +61,27 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, onStartSimulat
                         {route.description || 'No description available.'}
                     </p>
 
-
-
                     {route.category === 'route' && (
                         <div className="space-y-3">
-                            {/* Primary Action: Select Route (Collapse Panel for Riding) */}
                             <button
-                                onClick={() => setIsExpanded(false)}
-                                className="w-full py-3 bg-satoyama-forest text-white rounded-lg font-bold text-lg shadow-md hover:bg-[#1a3815] transition-colors flex items-center justify-center gap-2 mb-2"
+                                onClick={() => {
+                                    // setIsExpanded(false); // Maybe keep open? Or close. 
+                                    // For now let's just keep the original selection behavior
+                                }}
+                                className="w-full py-3 bg-satoyama-forest/90 text-white rounded-lg font-bold text-md shadow-sm hover:bg-satoyama-forest transition-colors flex items-center justify-center gap-2 mb-1 opacity-90"
                             >
-                                <span>🚲</span> このルートを選ぶ
+                                🚲 このルートを選ぶ
                             </button>
 
-                            {/* Simulation Controls */}
-                            <div className="border-t border-dashed border-satoyama-leaf/30 pt-3">
-                                <div className="flex items-center justify-between text-xs font-bold text-satoyama-leaf mb-2">
-                                    <span>Simulation Speed</span>
-                                    <span>{speed} km/h</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="5" max="60" step="5"
-                                    value={speed}
-                                    onChange={(e) => onSpeedChange(parseInt(e.target.value))}
-                                    className="w-full accent-satoyama-forest h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                    disabled={isSimulating}
-                                />
-                            </div>
-
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={onStartSimulation}
-                                    className={`flex-1 py-3 rounded-lg font-bold text-sm tracking-widest uppercase transition-all shadow-md flex items-center justify-center gap-2
-                                        ${isSimulating
-                                            ? 'bg-red-500 text-white hover:bg-red-600'
-                                            : 'bg-satoyama-forest text-white hover:bg-[#1a3815]'
-                                        }`}
-                                >
-                                    {isSimulating ? (
-                                        <><span>⏹</span> Stop</>
-                                    ) : (
-                                        <><span>▶</span> Start</>
-                                    )}
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => {
+                                    if (onStart) onStart();
+                                    setIsExpanded(false);
+                                }}
+                                className="w-full py-3 bg-satoyama-forest text-white rounded-lg font-bold text-xl shadow-md hover:bg-[#1a3815] transition-colors flex items-center justify-center gap-2 border-t border-white/10"
+                            >
+                                <span className="text-xs">▶</span> START
+                            </button>
                         </div>
                     )}
                 </div>

@@ -4,7 +4,7 @@ import NavigationBanner from './components/NavigationPopup' // Still using the s
 import CourseInfoPanel from './components/CourseInfoPanel'
 import { explorationRoutes } from './data/explorationRoutes'
 import { useNavigation } from './hooks/useNavigation'
-import { useSimulation } from './hooks/useSimulation'
+
 import WelcomeGuide from './components/WelcomeGuide'
 import { getDistance } from './utils/distance'
 
@@ -29,13 +29,7 @@ function App() {
 
     // ... (rest of hooks)
 
-    const {
-        isPlaying: isSimulating,
-        toggleSimulation,
-        simulatedLocation,
-        setSpeed,
-        speed: simSpeed
-    } = useSimulation(routeGeometry);
+
 
     // Derived state for active route info
     // Derived state for active route info
@@ -45,30 +39,13 @@ function App() {
         currentStep,
         distanceToNext,
         currentSpeed,
+        isNavigating,
         updateLocation,
         startNavigation,
         stopNavigation
     } = useNavigation(routeSteps);
 
-    const handleToggleSimulation = () => {
-        if (!isSimulating) {
-            startNavigation();
-        } else {
-            stopNavigation();
-        }
 
-        toggleSimulation();
-    };
-
-
-    // ... (rest of useEffects)
-
-    // Feed simulated location to navigation logic
-    useEffect(() => {
-        if (isSimulating && simulatedLocation) {
-            updateLocation(simulatedLocation.lat, simulatedLocation.lng);
-        }
-    }, [isSimulating, simulatedLocation, updateLocation]);
 
     // ... (sortedRoutes memo)
 
@@ -190,30 +167,31 @@ function App() {
 
             {/* Main Map Area */}
             <main className="flex-grow relative h-full">
-
+                {currentStep && (
+                    <NavigationBanner
+                        step={currentStep}
+                        distance={distanceToNext}
+                        speed={currentSpeed}
+                    />
+                )}
 
                 {selectedRoute && selectedRoute.category === 'route' && (
                     <CourseInfoPanel
                         route={selectedRoute}
-                        isSimulating={isSimulating}
-                        onStartSimulation={handleToggleSimulation}
-                        speed={simSpeed}
-                        onSpeedChange={setSpeed}
+                        onStart={startNavigation}
                         className="absolute bottom-6 left-4 right-4 md:bottom-8 md:left-8 md:right-auto z-30"
                     />
                 )}
 
                 <Map
                     activeRoute={activeRoute}
-                    simulatedLocation={simulatedLocation}
+                    isNavigating={isNavigating}
+
                     selectionTimestamp={selectionTimestamp}
                     speed={currentSpeed}
                     onUserLocationChange={(lat, lng) => {
-                        // Only update real location if not simulating
-                        if (!isSimulating) {
-                            setUserLocation({ lat, lng });
-                            updateLocation(lat, lng);
-                        }
+                        setUserLocation({ lat, lng });
+                        updateLocation(lat, lng);
                     }}
                     onStepsChange={(steps) => {
                         setRouteSteps(steps);

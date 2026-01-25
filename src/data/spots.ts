@@ -55,13 +55,5 @@ export const spots: Spot[] = [
         coordinates: [135.2223, 35.0718],
         googleMapsUrl: 'https://www.google.com/maps/place/Kissa+Oito/@35.0718,135.2223',
         description: '城下町の町屋を改装した落ち着いた雰囲気のカフェ。地元の食材を使った料理やこだわりのコーヒーが人気です。'
-    },
-    {
-        id: 'futaba-cafe',
-        name: 'ふたばカフェ',
-        category: 'cafe',
-        coordinates: [135.1652, 35.0440],
-        googleMapsUrl: 'https://www.google.com/maps/place/Futaba+Cafe/@35.0440,135.1652',
-        description: '自家栽培の野菜をふんだんに使ったランチやスイーツが自慢のカフェ。里山の豊かな自然を感じながら食事ができます。'
     }
 ];
