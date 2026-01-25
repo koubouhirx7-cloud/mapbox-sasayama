@@ -1158,48 +1158,6 @@
         {
             "type": "Feature",
             "properties": {
-                "name": "丹波並木道中央公園サイクルステーション",
-                "type": "checkpoint"
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    135.16195,
-                    35.0747
-                ]
-            }
-        },
-        {
-            "type": "Feature",
-            "properties": {
-                "name": "りょうり舎やまゆ",
-                "type": "checkpoint"
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    135.16382,
-                    35.0733
-                ]
-            }
-        },
-        {
-            "type": "Feature",
-            "properties": {
-                "name": "四季の森生涯学習センタ一東館",
-                "type": "checkpoint"
-            },
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    135.17522,
-                    35.0668
-                ]
-            }
-        },
-        {
-            "type": "Feature",
-            "properties": {
                 "name": "大國寺",
                 "type": "checkpoint"
             },
