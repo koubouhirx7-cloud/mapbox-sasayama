@@ -65,8 +65,8 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
                     >
                         ✕
                     </button>
-                    <h2 className="text-2xl font-bold text-satoyama-forest mb-2 font-outfit">Welcome to Green-Gear</h2>
-                    <p className="text-satoyama-soil animate-pulse mb-4">Locating you to find the best trails...</p>
+                    <h2 className="text-2xl font-bold text-satoyama-forest mb-2 font-outfit">Green-Gearへようこそ</h2>
+                    <p className="text-satoyama-soil animate-pulse mb-4">現在地を取得中...</p>
                     <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-satoyama-forest"></div>
                     </div>
@@ -87,9 +87,9 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
                     >
                         ✕
                     </button>
-                    <h2 className="text-3xl font-bold font-outfit relative z-10">Welcome!</h2>
+                    <h2 className="text-3xl font-bold font-outfit relative z-10">ようこそ！</h2>
                     <p className="text-white/80 text-sm mt-1 relative z-10">
-                        {userLocation ? 'Based on your location, we recommend:' : 'Explore our recommended routes:'}
+                        {userLocation ? '現在地に基づいたおすすめのコース：' : 'おすすめのコース：'}
                     </p>
                 </div>
 
@@ -106,7 +106,7 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
                         >
                             {index === 0 && (
                                 <div className="absolute top-0 right-0 bg-[#D4AF37] text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg shadow-sm z-10">
-                                    TOP PICK
+                                    イチオシ
                                 </div>
                             )}
 
@@ -121,13 +121,13 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
                                     <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
                                         {distances[route.id] !== undefined ? (
                                             <span className="flex items-center gap-1">
-                                                📍 <span className="font-bold text-satoyama-forest">{distances[route.id]} km</span> away
+                                                📍 現在地から <span className="font-bold text-satoyama-forest">{distances[route.id]} km</span>
                                             </span>
                                         ) : (
-                                            <span className="text-gray-400 italic">Distance unknown</span>
+                                            <span className="text-gray-400 italic">距離不明</span>
                                         )}
                                         <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                                        <span>Length: {route.distance} km</span>
+                                        <span>距離: {route.distance} km</span>
                                     </div>
                                 </div>
                             </div>
@@ -141,7 +141,7 @@ const WelcomeGuide: React.FC<WelcomeGuideProps> = ({ userLocation, routes, onSel
                         onClick={onClose}
                         className="text-satoyama-leaf text-sm font-bold hover:text-satoyama-forest transition-colors underline decoration-dotted underline-offset-4"
                     >
-                        View all routes on map
+                        すべてのコースを地図で見る
                     </button>
                 </div>
             </div>
