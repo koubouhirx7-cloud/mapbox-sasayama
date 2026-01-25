@@ -125,7 +125,7 @@ export const explorationRoutes: ExplorationRoute[] = [
     },
     {
         id: 'imada-area',
-        name: '今田エリア',
+        name: '立杭・今田エリア',
         startPoint: [135.130, 34.980],
         color: '#1E88E5',
         category: 'area',
