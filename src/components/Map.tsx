@@ -167,32 +167,30 @@ const Map: React.FC<MapProps> = ({
                     const map = mapRef.current!;
 
                     // 1.5 Add Historical Source (GSI USA10: 1945-1950)
-                    map.addSource('historical-tiles', {
-                        type: 'raster',
-                        tiles: ['https://cyberjapandata.gsi.go.jp/xyz/ort_USA10/{z}/{x}/{y}.png'],
-                        tileSize: 256,
-                        attribution: '国土地理院'
-                    });
+                    if (!map.getSource('historical-tiles')) {
+                        map.addSource('historical-tiles', {
+                            type: 'raster',
+                            tiles: ['https://cyberjapandata.gsi.go.jp/xyz/ort_USA10/{z}/{x}/{y}.png'],
+                            tileSize: 256,
+                            attribution: '国土地理院'
+                        });
+                    }
 
                     // Add Historical Layer (Initially hidden or visible based on state)
-                    // We add it *before* symbols if possible, but for overlay we might want it on top with opacity?
-                    // User said "overlay... see through to current roads".
-                    // So we put it *below* roads ideally, OR on top with opacity.
-                    // Let's try putting it below labels but above base.
-                    // Actually, GSI tiles are opaque raster. To see roads *through* it, roads need to be ON TOP.
-                    // But standard mapbox style has roads. If we put raster on top with 0.5 opacity, we act as a filter.
-                    map.addLayer({
-                        id: 'historical-layer',
-                        type: 'raster',
-                        source: 'historical-tiles',
-                        paint: {
-                            'raster-opacity': 0.4, // Transparency
-                            'raster-fade-duration': 300
-                        },
-                        layout: {
-                            visibility: 'none' // Start hidden
-                        }
-                    });
+                    if (!map.getLayer('historical-layer')) {
+                        map.addLayer({
+                            id: 'historical-layer',
+                            type: 'raster',
+                            source: 'historical-tiles',
+                            paint: {
+                                'raster-opacity': 0.4, // Transparency
+                                'raster-fade-duration': 300
+                            },
+                            layout: {
+                                visibility: 'none' // Start hidden
+                            }
+                        });
+                    }
 
                     // 2. Localize Labels & White Halo
                     const layers = map.getStyle()?.layers;
