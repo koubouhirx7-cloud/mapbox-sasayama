@@ -166,14 +166,14 @@ const Map: React.FC<MapProps> = ({
                 mapRef.current.on('style.load', () => {
                     const map = mapRef.current!;
 
-                    // 1.5 Add Historical Source (GSI 1961-1969: "ort_old10")
-                    // USA10 has poor coverage in rural areas. Switched to old10.
+                    // 1.5 Add Historical Source (GSI 1974-1978: "gazo1")
+                    // ort_old10 (1960s) also lacked data. gazo1 (1974-78) has reliable nationwide coverage.
                     if (!map.getSource('historical-tiles')) {
                         map.addSource('historical-tiles', {
                             type: 'raster',
-                            tiles: ['https://cyberjapandata.gsi.go.jp/xyz/ort_old10/{z}/{x}/{y}.png'],
+                            tiles: ['https://cyberjapandata.gsi.go.jp/xyz/gazo1/{z}/{x}/{y}.jpg'],
                             tileSize: 256,
-                            attribution: '国土地理院 (1961-1969)'
+                            attribution: '国土地理院 (1974-1978)'
                         });
                     }
 
