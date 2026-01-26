@@ -56,8 +56,14 @@ const Map: React.FC<MapProps> = ({
     const spotMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
-    const [is3D, setIs3D] = useState(false);
-    const [isHistorical, setIsHistorical] = useState(false); // Historical Overlay State
+
+    // Persisted States
+    const [is3D, setIs3D] = useState(() => localStorage.getItem('map_is3D') === 'true');
+    const [isHistorical, setIsHistorical] = useState(() => localStorage.getItem('map_isHistorical') === 'true');
+
+    // Effects to save state
+    useEffect(() => localStorage.setItem('map_is3D', is3D.toString()), [is3D]);
+    useEffect(() => localStorage.setItem('map_isHistorical', isHistorical.toString()), [isHistorical]);
 
     // Refs for state access inside callbacks
     const isNavigatingRef = useRef(isNavigating);

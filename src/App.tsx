@@ -11,7 +11,16 @@ import { getDistance } from './utils/distance'
 type RouteType = 'sasayama-main' | string;
 
 function App() {
-    const [activeRoute, setActiveRoute] = useState<RouteType>('none')
+    // Initialize from localStorage or default to 'none'
+    const [activeRoute, setActiveRoute] = useState<RouteType>(() => {
+        return localStorage.getItem('active_route') || 'none';
+    });
+
+    // Persist activeRoute changes
+    useEffect(() => {
+        localStorage.setItem('active_route', activeRoute);
+    }, [activeRoute]);
+
     const [selectionTimestamp, setSelectionTimestamp] = useState<number>(0);
 
     // Debug: Trace route changes
