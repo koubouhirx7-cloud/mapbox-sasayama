@@ -184,7 +184,7 @@ const Map: React.FC<MapProps> = ({
                             type: 'raster',
                             source: 'historical-tiles',
                             paint: {
-                                'raster-opacity': 0.4, // Transparency
+                                'raster-opacity': 0.7, // Increased from 0.4 for better visibility
                                 'raster-fade-duration': 300
                             },
                             layout: {
