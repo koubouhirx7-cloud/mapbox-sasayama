@@ -643,6 +643,38 @@ const Map: React.FC<MapProps> = ({
             >
                 {isHistorical ? '古' : '今'}
             </button>
+
+            {/* Current Location Button */}
+            <button
+                onClick={() => {
+                    if (lastUserLocationRef.current && mapRef.current) {
+                        mapRef.current.flyTo({
+                            center: [lastUserLocationRef.current.lng, lastUserLocationRef.current.lat],
+                            zoom: 15,
+                            pitch: 45,
+                            bearing: lastUserLocationRef.current.heading || 0,
+                            duration: 1500
+                        });
+                        // Re-engage snap if navigating
+                        if (isNavigating) {
+                            hasSnappedToNavRef.current = true;
+                        }
+                    } else {
+                        alert('現在地を取得できませんでした。');
+                    }
+                }}
+                className="absolute top-52 right-3 z-10 bg-white text-satoyama-forest p-2 rounded-full shadow-lg hover:bg-gray-50 flex items-center justify-center transition-all duration-300"
+                style={{ width: '40px', height: '40px' }}
+                aria-label="Return to Current Location"
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="22" y1="12" x2="18" y2="12"></line>
+                    <line x1="6" y1="12" x2="2" y2="12"></line>
+                    <line x1="12" y1="6" x2="12" y2="2"></line>
+                    <line x1="12" y1="22" x2="12" y2="18"></line>
+                </svg>
+            </button>
         </div>
     );
 };
