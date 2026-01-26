@@ -57,6 +57,7 @@ const Map: React.FC<MapProps> = ({
     const [error, setError] = useState<string | null>(null);
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
     const [is3D, setIs3D] = useState(false);
+    const [isHistorical, setIsHistorical] = useState(false); // Historical Overlay State
 
     // Refs for state access inside callbacks
     const isNavigatingRef = useRef(isNavigating);
@@ -164,6 +165,34 @@ const Map: React.FC<MapProps> = ({
 
                 mapRef.current.on('style.load', () => {
                     const map = mapRef.current!;
+
+                    // 1.5 Add Historical Source (GSI USA10: 1945-1950)
+                    map.addSource('historical-tiles', {
+                        type: 'raster',
+                        tiles: ['https://cyberjapandata.gsi.go.jp/xyz/ort_USA10/{z}/{x}/{y}.png'],
+                        tileSize: 256,
+                        attribution: '国土地理院'
+                    });
+
+                    // Add Historical Layer (Initially hidden or visible based on state)
+                    // We add it *before* symbols if possible, but for overlay we might want it on top with opacity?
+                    // User said "overlay... see through to current roads".
+                    // So we put it *below* roads ideally, OR on top with opacity.
+                    // Let's try putting it below labels but above base.
+                    // Actually, GSI tiles are opaque raster. To see roads *through* it, roads need to be ON TOP.
+                    // But standard mapbox style has roads. If we put raster on top with 0.5 opacity, we act as a filter.
+                    map.addLayer({
+                        id: 'historical-layer',
+                        type: 'raster',
+                        source: 'historical-tiles',
+                        paint: {
+                            'raster-opacity': 0.4, // Transparency
+                            'raster-fade-duration': 300
+                        },
+                        layout: {
+                            visibility: 'none' // Start hidden
+                        }
+                    });
 
                     // 2. Localize Labels & White Halo
                     const layers = map.getStyle()?.layers;
@@ -579,6 +608,29 @@ const Map: React.FC<MapProps> = ({
                     routeData={targetRoute.data}
                 />
             )}
+
+            {/* Historical Toggle Button */}
+            <button
+                onClick={() => {
+                    if (mapRef.current && mapRef.current.getLayer('historical-layer')) {
+                        const nextState = !isHistorical;
+                        mapRef.current.setLayoutProperty(
+                            'historical-layer',
+                            'visibility',
+                            nextState ? 'visible' : 'none'
+                        );
+                        setIsHistorical(nextState);
+                    }
+                }}
+                className={`absolute top-24 right-3 z-10 p-3 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
+                    ${isHistorical
+                        ? 'bg-sepia-700 text-white bg-[#5D4037] ring-2 ring-[#8D6E63]'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                style={{ width: '40px', height: '40px' }}
+                aria-label="Toggle Historical Map"
+            >
+                {isHistorical ? '古' : '今'}
+            </button>
         </div>
     );
 };
