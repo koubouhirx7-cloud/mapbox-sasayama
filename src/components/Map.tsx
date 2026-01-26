@@ -687,6 +687,39 @@ const Map: React.FC<MapProps> = ({
                     <line x1="12" y1="22" x2="12" y2="18"></line>
                 </svg>
             </button>
+
+            {/* 3D Mode Toggle Button */}
+            <button
+                onClick={() => {
+                    if (mapRef.current) {
+                        const nextState = !is3D;
+                        setIs3D(nextState);
+
+                        if (nextState) {
+                            // Switch to 3D View
+                            mapRef.current.easeTo({
+                                pitch: 60,
+                                duration: 1000
+                            });
+                        } else {
+                            // Switch to 2D View
+                            mapRef.current.easeTo({
+                                pitch: 0,
+                                bearing: 0, // Reset bearing in 2D for easier orientation
+                                duration: 1000
+                            });
+                        }
+                    }
+                }}
+                className={`absolute top-64 right-3 z-10 p-2 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
+                    ${is3D
+                        ? 'bg-satoyama-forest text-white ring-2 ring-satoyama-leaf'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                style={{ width: '40px', height: '40px' }}
+                aria-label="Toggle 3D View"
+            >
+                3D
+            </button>
         </div>
     );
 };
