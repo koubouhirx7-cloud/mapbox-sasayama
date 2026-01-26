@@ -472,6 +472,19 @@ const Map: React.FC<MapProps> = ({
             if (!hasSnappedToNavRef.current) {
                 options.zoom = 16.5;
                 hasSnappedToNavRef.current = true;
+
+                // Smart Center Logic: User Location -> Course Start
+                if (lastUserLocationRef.current) {
+                    options.center = [lastUserLocationRef.current.lng, lastUserLocationRef.current.lat];
+                    console.log('[Map] Nav Start: Snapping to USER LOCATION');
+                } else {
+                    const currentRoute = explorationRoutes.find(r => r.id === activeRoute);
+                    if (currentRoute?.startPoint) {
+                        options.center = currentRoute.startPoint;
+                        console.log('[Map] Nav Start: User Location unknown, snapping to COURSE START');
+                    }
+                }
+
                 console.log(`[Map] ${isNavigating ? 'Nav Start' : 'Movement'} detected. Snapping to Nav View (Zoom 16.5, North Up, 45 Tilt)`);
             }
 
