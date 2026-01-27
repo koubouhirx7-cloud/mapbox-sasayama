@@ -5,8 +5,6 @@ import { fetchDirections } from '../services/DirectionsService';
 import GpxRouteLayer from './GpxRouteLayer';
 import courseData from '../data/course.json';
 import { explorationRoutes } from '../data/explorationRoutes';
-import { getMatchedRoute } from '../utils/mapMatching';
-import { spots, Spot } from '../data/spots';
 import { fetchPOIs, POI } from '../services/OverpassService';
 
 const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
@@ -55,7 +53,6 @@ const Map: React.FC<MapProps> = ({
     const mapRef = useRef<mapboxgl.Map | null>(null);
     // markersRef removed
     // markersRef removed
-    const spotMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const poiMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
@@ -71,8 +68,6 @@ const Map: React.FC<MapProps> = ({
 
     // Persisted States
     const [is3D, setIs3D] = useState(() => localStorage.getItem('map_is3D') === 'true');
-    const [isHistorical, setIsHistorical] = useState(() => localStorage.getItem('map_isHistorical') === 'true');
-    const [isSpotsVisible, setIsSpotsVisible] = useState(() => localStorage.getItem('map_isSpotsVisible') !== 'false'); // Default true
 
 
     // Tracking State
@@ -95,8 +90,6 @@ const Map: React.FC<MapProps> = ({
 
     // Effects to save state
     useEffect(() => localStorage.setItem('map_is3D', is3D.toString()), [is3D]);
-    useEffect(() => localStorage.setItem('map_isHistorical', isHistorical.toString()), [isHistorical]);
-    useEffect(() => localStorage.setItem('map_isSpotsVisible', isSpotsVisible.toString()), [isSpotsVisible]);
 
 
     // Refs for state access inside callbacks
@@ -477,7 +470,7 @@ const Map: React.FC<MapProps> = ({
                 const coords = routeFeature.geometry.coordinates;
 
                 // Use Map Matching API for precise snapping and steps as requested
-                const matched = await getMatchedRoute(coords);
+                const matched = await fetchDirections(coords);
 
                 if (matched) {
                     const cb = onStepsChangeRef.current;
@@ -651,47 +644,6 @@ const Map: React.FC<MapProps> = ({
         }
     }, [simulatedLocation]);
 
-    useEffect(() => {
-        if (!mapInstance) return;
-
-        // Create markers if they don't exist
-        if (spotMarkersRef.current.length === 0) {
-            spots.forEach((spot: Spot) => {
-                const markerColor = spot.category === 'cafe' ? '#D84315' :
-                    spot.category === 'experience' ? '#AD1457' : '#2D5A27';
-
-                const popupContent = `
-                    <div class="p-3 max-w-[200px] font-sans">
-                        <h3 class="text-sm font-bold text-[#2D5A27] mb-1">${spot.name}</h3>
-                        <p class="text-xs text-gray-600 mb-2 leading-tight">${spot.description}</p>
-                        <a href="${spot.googleMapsUrl}" target="_blank" rel="noopener noreferrer" 
-                           class="inline-block w-full text-center bg-[#2D5A27] text-white text-[10px] py-1.5 rounded shadow-sm hover:bg-[#1B3617] transition-colors">
-                            Googleマップで見る
-                        </a>
-                    </div>
-                `;
-
-                const popup = new mapboxgl.Popup({ offset: 35, maxWidth: '250px' })
-                    .setHTML(popupContent);
-
-                const marker = new mapboxgl.Marker({ color: markerColor })
-                    .setLngLat(spot.coordinates)
-                    .setPopup(popup); // Don't add to map yet
-
-                spotMarkersRef.current.push(marker);
-            });
-        }
-
-        // Toggle visibility
-        spotMarkersRef.current.forEach(marker => {
-            if (isSpotsVisible) {
-                marker.addTo(mapInstance);
-            } else {
-                marker.remove();
-            }
-        });
-
-    }, [mapInstance, isSpotsVisible]);
 
 
     // Handle Overpass POI Search
@@ -791,29 +743,6 @@ const Map: React.FC<MapProps> = ({
                 />
             )}
 
-            {/* Historical Toggle Button */}
-            <button
-                onClick={() => {
-                    if (mapRef.current && mapRef.current.getLayer('historical-layer')) {
-                        const nextState = !isHistorical;
-                        mapRef.current.setLayoutProperty(
-                            'historical-layer',
-                            'visibility',
-                            nextState ? 'visible' : 'none'
-                        );
-                        setIsHistorical(nextState);
-                    }
-                }}
-                className={`absolute top-40 right-3 z-10 p-3 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
-                    ${isHistorical
-                        ? 'bg-sepia-700 text-white bg-[#5D4037] ring-2 ring-[#8D6E63]'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-                style={{ width: '40px', height: '40px' }}
-                aria-label="Toggle Historical Map"
-            >
-                {isHistorical ? '古' : '今'}
-            </button>
-
             {/* Current Location Button */}
             <button
                 onClick={() => {
@@ -835,7 +764,7 @@ const Map: React.FC<MapProps> = ({
                     // Enable tracking mode
                     setIsTracking(true);
                 }}
-                className="absolute top-52 right-3 z-10 bg-white text-satoyama-forest p-2 rounded-full shadow-lg hover:bg-gray-50 flex items-center justify-center transition-all duration-300"
+                className="absolute top-40 right-3 z-10 bg-white text-satoyama-forest p-2 rounded-full shadow-lg hover:bg-gray-50 flex items-center justify-center transition-all duration-300"
                 style={{ width: '40px', height: '40px' }}
                 aria-label="Return to Current Location"
             >
@@ -871,7 +800,7 @@ const Map: React.FC<MapProps> = ({
                         }
                     }
                 }}
-                className={`absolute top-64 right-3 z-10 p-2 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
+                className={`absolute top-52 right-3 z-10 p-2 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
                     ${is3D
                         ? 'bg-satoyama-forest text-white ring-2 ring-satoyama-leaf'
                         : 'bg-white text-gray-700 hover:bg-gray-50'}`}
@@ -881,29 +810,12 @@ const Map: React.FC<MapProps> = ({
                 3D
             </button>
 
-            {/* Spots Toggle Button */}
-            <button
-                onClick={() => setIsSpotsVisible(!isSpotsVisible)}
-                className={`absolute top-[308px] right-3 z-10 p-2 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
-                    ${isSpotsVisible
-                        ? 'bg-orange-600 text-white ring-2 ring-orange-800'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-                style={{ width: '40px', height: '40px' }}
-                aria-label="Toggle Spots"
-            >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 21h18v-8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8z"></path>
-                    <path d="M12 11V3"></path>
-                    <path d="M8 3h8"></path>
-                    <path d="M12 3a4 4 0 0 1 4 4"></path>
-                </svg>
-            </button>
 
             {/* Overpass Search Button */}
             <button
                 onClick={handleSearchArea}
                 disabled={isSearching}
-                className={`absolute top-4 left-4 z-10 px-4 py-2 rounded-full shadow-lg transition-all duration-300 flex items-center gap-2 font-bold text-sm
+                className={`absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-full shadow-lg transition-all duration-300 flex items-center gap-2 font-bold text-sm
                     ${isSearching ? 'bg-gray-100 text-gray-400 cursor-wait' : 'bg-white text-blue-600 hover:bg-blue-50 ring-1 ring-blue-200'}`}
             >
                 {isSearching ? (
@@ -924,7 +836,7 @@ const Map: React.FC<MapProps> = ({
 
             {/* POI Control Panel (Only visible when POIs are present) */}
             {pois.length > 0 && (
-                <div className="absolute top-[60px] left-4 z-10 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-gray-200 w-48 animate-slide-down">
+                <div className="absolute top-[60px] left-1/2 -translate-x-1/2 z-10 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-gray-200 w-48 animate-slide-down">
                     <div className="flex justify-between items-center mb-2 border-b pb-2">
                         <h3 className="text-xs font-bold text-gray-700">検索結果 ({pois.length})</h3>
                         <button

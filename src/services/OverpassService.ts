@@ -48,11 +48,22 @@ export async function fetchPOIs(bounds: { south: number, west: number, north: nu
                 // Skip unnamed toilets/convenience stores if prefered, but usually we want them all
                 // For restaurants, names are better but we can show unnamed ones too
 
+                // Name resolution
+                let name = element.tags.name || element.tags['name:ja'] || element.tags['name:en'];
+
+                // Special handling for toilets: if unnamed, call it "Public Toilet"
+                if (!name && type === 'toilet') {
+                    name = '公衆トイレ';
+                }
+
+                // If still no name, skip it (User requested removal of "Name Unregistered" items)
+                if (!name) return;
+
                 pois.push({
                     id: element.id,
                     lat: element.lat,
                     lon: element.lon,
-                    name: element.tags.name || element.tags['name:ja'] || element.tags['name:en'] || '名称未登録',
+                    name: name,
                     type: type,
                     tags: element.tags
                 });
