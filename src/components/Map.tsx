@@ -60,10 +60,32 @@ const Map: React.FC<MapProps> = ({
     // Persisted States
     const [is3D, setIs3D] = useState(() => localStorage.getItem('map_is3D') === 'true');
     const [isHistorical, setIsHistorical] = useState(() => localStorage.getItem('map_isHistorical') === 'true');
+    const [isSpotsVisible, setIsSpotsVisible] = useState(() => localStorage.getItem('map_isSpotsVisible') !== 'false'); // Default true
+
+
+    // Tracking State
+    const [isTracking, setIsTracking] = useState(false);
+    const isTrackingRef = useRef(false);
+
+    // Sync isTracking ref
+    useEffect(() => {
+        isTrackingRef.current = isTracking;
+    }, [isTracking]);
+
+    // Enable tracking when navigation starts
+    useEffect(() => {
+        if (isNavigating) {
+            setIsTracking(true);
+        } else {
+            setIsTracking(false);
+        }
+    }, [isNavigating]);
 
     // Effects to save state
     useEffect(() => localStorage.setItem('map_is3D', is3D.toString()), [is3D]);
     useEffect(() => localStorage.setItem('map_isHistorical', isHistorical.toString()), [isHistorical]);
+    useEffect(() => localStorage.setItem('map_isSpotsVisible', isSpotsVisible.toString()), [isSpotsVisible]);
+
 
     // Refs for state access inside callbacks
     const isNavigatingRef = useRef(isNavigating);
@@ -249,6 +271,18 @@ const Map: React.FC<MapProps> = ({
                     });
                     map.addControl(geolocate, 'top-right');
 
+                    // Disable tracking on manual interaction
+                    const disableTracking = (e: any) => {
+                        if (e.originalEvent) {
+                            setIsTracking(false);
+                            isTrackingRef.current = false;
+                        }
+                    };
+                    map.on('dragstart', disableTracking);
+                    map.on('touchstart', disableTracking);
+                    map.on('wheel', disableTracking);
+
+
                     geolocate.on('geolocate', (position: any) => {
                         const cb = onUserLocationChangeRef.current;
                         if (cb) cb(position.coords.latitude, position.coords.longitude);
@@ -267,10 +301,20 @@ const Map: React.FC<MapProps> = ({
 
                         // Update marker immediately
                         updateUserMarker();
+
+                        // Follow User Location if Tracking
+                        if (isTrackingRef.current) {
+                            mapRef.current?.easeTo({
+                                center: [position.coords.longitude, position.coords.latitude],
+                                duration: 1000,
+                                easing: (t) => t // Linear easing for smooth following
+                            });
+                        }
                     });
 
                     geolocate.on('error', (e: any) => {
                         console.error('Geolocate error:', e);
+                        /* Suppressed user alerts for smoother experience
                         if (e.code === 1) {
                             alert('位置情報の利用が許可されていません。端末の設定で位置情報をオンにしてください。');
                         } else if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
@@ -278,6 +322,7 @@ const Map: React.FC<MapProps> = ({
                         } else {
                             alert('現在地を取得できませんでした。電波の良い場所で再度お試しください。');
                         }
+                        */
                     });
 
                     // Auto-start Geolocation for all users
@@ -357,33 +402,6 @@ const Map: React.FC<MapProps> = ({
                         map.on('click', layerId, (e) => {
                             map.flyTo({ center: e.lngLat, zoom: 15, duration: 1500 });
                         });
-                    });
-
-                    // 5. Sightseeing Spots & Cafes Markers
-                    spots.forEach((spot: Spot) => {
-                        const markerColor = spot.category === 'cafe' ? '#D84315' :
-                            spot.category === 'experience' ? '#AD1457' : '#2D5A27';
-
-                        const popupContent = `
-                            <div class="p-3 max-w-[200px] font-sans">
-                                <h3 class="text-sm font-bold text-[#2D5A27] mb-1">${spot.name}</h3>
-                                <p class="text-xs text-gray-600 mb-2 leading-tight">${spot.description}</p>
-                                <a href="${spot.googleMapsUrl}" target="_blank" rel="noopener noreferrer" 
-                                   class="inline-block w-full text-center bg-[#2D5A27] text-white text-[10px] py-1.5 rounded shadow-sm hover:bg-[#1B3617] transition-colors">
-                                    Googleマップで見る
-                                </a>
-                            </div>
-                        `;
-
-                        const popup = new mapboxgl.Popup({ offset: 35, maxWidth: '250px' })
-                            .setHTML(popupContent);
-
-                        const marker = new mapboxgl.Marker({ color: markerColor })
-                            .setLngLat(spot.coordinates)
-                            .setPopup(popup)
-                            .addTo(map);
-
-                        spotMarkersRef.current.push(marker);
                     });
                 });
 
@@ -621,6 +639,49 @@ const Map: React.FC<MapProps> = ({
         }
     }, [simulatedLocation]);
 
+    useEffect(() => {
+        if (!mapInstance) return;
+
+        // Create markers if they don't exist
+        if (spotMarkersRef.current.length === 0) {
+            spots.forEach((spot: Spot) => {
+                const markerColor = spot.category === 'cafe' ? '#D84315' :
+                    spot.category === 'experience' ? '#AD1457' : '#2D5A27';
+
+                const popupContent = `
+                    <div class="p-3 max-w-[200px] font-sans">
+                        <h3 class="text-sm font-bold text-[#2D5A27] mb-1">${spot.name}</h3>
+                        <p class="text-xs text-gray-600 mb-2 leading-tight">${spot.description}</p>
+                        <a href="${spot.googleMapsUrl}" target="_blank" rel="noopener noreferrer" 
+                           class="inline-block w-full text-center bg-[#2D5A27] text-white text-[10px] py-1.5 rounded shadow-sm hover:bg-[#1B3617] transition-colors">
+                            Googleマップで見る
+                        </a>
+                    </div>
+                `;
+
+                const popup = new mapboxgl.Popup({ offset: 35, maxWidth: '250px' })
+                    .setHTML(popupContent);
+
+                const marker = new mapboxgl.Marker({ color: markerColor })
+                    .setLngLat(spot.coordinates)
+                    .setPopup(popup); // Don't add to map yet
+
+                spotMarkersRef.current.push(marker);
+            });
+        }
+
+        // Toggle visibility
+        spotMarkersRef.current.forEach(marker => {
+            if (isSpotsVisible) {
+                marker.addTo(mapInstance);
+            } else {
+                marker.remove();
+            }
+        });
+
+    }, [mapInstance, isSpotsVisible]);
+
+
     if (error) return <div className="text-red-500 p-4">{error}</div>;
 
     return (
@@ -680,6 +741,8 @@ const Map: React.FC<MapProps> = ({
                     } else {
                         alert('現在地を取得できませんでした。');
                     }
+                    // Enable tracking mode
+                    setIsTracking(true);
                 }}
                 className="absolute top-52 right-3 z-10 bg-white text-satoyama-forest p-2 rounded-full shadow-lg hover:bg-gray-50 flex items-center justify-center transition-all duration-300"
                 style={{ width: '40px', height: '40px' }}
@@ -726,7 +789,25 @@ const Map: React.FC<MapProps> = ({
             >
                 3D
             </button>
-        </div>
+
+            {/* Spots Toggle Button */}
+            <button
+                onClick={() => setIsSpotsVisible(!isSpotsVisible)}
+                className={`absolute top-[308px] right-3 z-10 p-2 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
+                    ${isSpotsVisible
+                        ? 'bg-orange-600 text-white ring-2 ring-orange-800'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                style={{ width: '40px', height: '40px' }}
+                aria-label="Toggle Spots"
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 21h18v-8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8z"></path>
+                    <path d="M12 11V3"></path>
+                    <path d="M8 3h8"></path>
+                    <path d="M12 3a4 4 0 0 1 4 4"></path>
+                </svg>
+            </button>
+        </div >
     );
 };
 
