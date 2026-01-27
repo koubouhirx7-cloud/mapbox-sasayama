@@ -485,6 +485,7 @@ const Map: React.FC<MapProps> = ({
 
                 // Re-register cleanup when map unmounts ?? (Usually map.remove handles listeners attached to map)
 
+            } catch (e) {
                 console.error('Failed to initialize Mapbox:', e);
                 setError('Failed to initialize map.');
             }
