@@ -58,6 +58,7 @@ const Map: React.FC<MapProps> = ({
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
     const [pois, setPois] = useState<POI[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isPanelOpen, setIsPanelOpen] = useState(true);
     const [visibleCategories, setVisibleCategories] = useState<Record<string, boolean>>({
         restaurant: true,
         cafe: true,
@@ -67,7 +68,9 @@ const Map: React.FC<MapProps> = ({
     });
 
     // Persisted States
+    // Persisted States
     const [is3D, setIs3D] = useState(() => localStorage.getItem('map_is3D') === 'true');
+    const [isHistorical, setIsHistorical] = useState(() => localStorage.getItem('map_isHistorical') === 'true');
 
 
     // Tracking State
@@ -89,7 +92,9 @@ const Map: React.FC<MapProps> = ({
     }, [isNavigating]);
 
     // Effects to save state
+    // Effects to save state
     useEffect(() => localStorage.setItem('map_is3D', is3D.toString()), [is3D]);
+    useEffect(() => localStorage.setItem('map_isHistorical', isHistorical.toString()), [isHistorical]);
 
 
     // Refs for state access inside callbacks
@@ -650,6 +655,9 @@ const Map: React.FC<MapProps> = ({
     const handleSearchArea = async () => {
         if (!mapInstance) return;
 
+        if (pois.length === 0) {
+            setIsPanelOpen(true); // Open panel on new search
+        }
         setIsSearching(true);
         const bounds = mapInstance.getBounds();
         const searchBounds = {
@@ -743,6 +751,29 @@ const Map: React.FC<MapProps> = ({
                 />
             )}
 
+            {/* Historical Toggle Button */}
+            <button
+                onClick={() => {
+                    if (mapRef.current && mapRef.current.getLayer('historical-layer')) {
+                        const nextState = !isHistorical;
+                        mapRef.current.setLayoutProperty(
+                            'historical-layer',
+                            'visibility',
+                            nextState ? 'visible' : 'none'
+                        );
+                        setIsHistorical(nextState);
+                    }
+                }}
+                className={`absolute top-40 right-3 z-10 p-3 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
+                    ${isHistorical
+                        ? 'bg-sepia-700 text-white bg-[#5D4037] ring-2 ring-[#8D6E63]'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                style={{ width: '40px', height: '40px' }}
+                aria-label="Toggle Historical Map"
+            >
+                {isHistorical ? '古' : '今'}
+            </button>
+
             {/* Current Location Button */}
             <button
                 onClick={() => {
@@ -764,7 +795,7 @@ const Map: React.FC<MapProps> = ({
                     // Enable tracking mode
                     setIsTracking(true);
                 }}
-                className="absolute top-40 right-3 z-10 bg-white text-satoyama-forest p-2 rounded-full shadow-lg hover:bg-gray-50 flex items-center justify-center transition-all duration-300"
+                className="absolute top-52 right-3 z-10 bg-white text-satoyama-forest p-2 rounded-full shadow-lg hover:bg-gray-50 flex items-center justify-center transition-all duration-300"
                 style={{ width: '40px', height: '40px' }}
                 aria-label="Return to Current Location"
             >
@@ -800,7 +831,7 @@ const Map: React.FC<MapProps> = ({
                         }
                     }
                 }}
-                className={`absolute top-52 right-3 z-10 p-2 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
+                className={`absolute top-64 right-3 z-10 p-2 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
                     ${is3D
                         ? 'bg-satoyama-forest text-white ring-2 ring-satoyama-leaf'
                         : 'bg-white text-gray-700 hover:bg-gray-50'}`}
@@ -837,40 +868,72 @@ const Map: React.FC<MapProps> = ({
             {/* POI Control Panel (Only visible when POIs are present) */}
             {pois.length > 0 && (
                 <div className="absolute top-[60px] left-1/2 -translate-x-1/2 z-10 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-gray-200 w-48 animate-slide-down">
-                    <div className="flex justify-between items-center mb-2 border-b pb-2">
-                        <h3 className="text-xs font-bold text-gray-700">検索結果 ({pois.length})</h3>
+                    <div className="flex justify-between items-center mb-2 border-b pb-2 cursor-pointer" onClick={() => setIsPanelOpen(!isPanelOpen)}>
+                        <h3 className="text-xs font-bold text-gray-700 select-none flex items-center gap-1">
+                            検索結果 ({pois.length})
+                            <span className={`transition-transform duration-200 ${isPanelOpen ? 'rotate-180' : ''}`}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </span>
+                        </h3>
                         <button
-                            onClick={() => setPois([])}
-                            className="text-[10px] text-red-500 hover:text-red-700 font-bold px-2 py-1 bg-red-50 rounded hover:bg-red-100 transition-colors"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setPois([]);
+                                poiMarkersRef.current.forEach(marker => marker.remove());
+                                poiMarkersRef.current = [];
+                            }}
+                            className="text-[10px] text-red-500 hover:bg-red-50 px-2 py-0.5 rounded border border-red-100 transition-colors"
                         >
                             クリア
                         </button>
                     </div>
-                    <div className="space-y-1.5">
-                        {[
-                            { id: 'restaurant', icon: '🍽️', label: 'レストラン' },
-                            { id: 'cafe', icon: '☕', label: 'カフェ' },
-                            { id: 'toilet', icon: '🚻', label: 'トイレ' },
-                            { id: 'tourism', icon: 'ℹ️', label: '観光案内' },
-                            { id: 'convenience', icon: '🏪', label: 'コンビニ' },
-                        ].map(type => {
-                            const count = pois.filter(p => p.type === type.id).length;
-                            if (count === 0) return null;
-                            return (
-                                <label key={type.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors select-none">
-                                    <input
-                                        type="checkbox"
-                                        checked={visibleCategories[type.id]}
-                                        onChange={(e) => setVisibleCategories(prev => ({ ...prev, [type.id]: e.target.checked }))}
-                                        className="rounded text-satoyama-forest focus:ring-satoyama-leaf w-3.5 h-3.5"
-                                    />
-                                    <span className="text-base">{type.icon}</span>
-                                    <span className="text-xs text-gray-600 flex-1">{type.label}</span>
-                                    <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 rounded-full">{count}</span>
-                                </label>
-                            );
-                        })}
-                    </div>
+
+                    {isPanelOpen && (
+                        <div className="space-y-2 animate-fade-in">
+                            <div className="grid grid-cols-1 gap-1.5">
+                                {Object.keys(visibleCategories).map(cat => {
+                                    // Count items in this category
+                                    const count = pois.filter(p => p.type === cat).length;
+                                    if (count === 0) return null;
+
+                                    let label = cat;
+                                    let icon = '📍';
+                                    switch (cat) {
+                                        case 'restaurant': label = 'レストラン'; icon = '🍽️'; break;
+                                        case 'cafe': label = 'カフェ'; icon = '☕'; break;
+                                        case 'toilet': label = 'トイレ'; icon = '🚻'; break;
+                                        case 'tourism': label = '観光案内'; icon = 'ℹ️'; break;
+                                        case 'convenience': label = 'コンビニ'; icon = '🏪'; break;
+                                    }
+
+                                    return (
+                                        <label key={cat} className="flex items-center justify-between text-xs cursor-pointer hover:bg-gray-50 p-1 rounded select-none">
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={visibleCategories[cat]}
+                                                    onChange={() => {
+                                                        const newState = { ...visibleCategories, [cat]: !visibleCategories[cat] };
+                                                        setVisibleCategories(newState);
+                                                    }}
+                                                    className="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                                                />
+                                                <span className="flex items-center gap-1.5 text-gray-700">
+                                                    <span className="text-sm">{icon}</span>
+                                                    <span>{label}</span>
+                                                </span>
+                                            </div>
+                                            <span className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full text-[10px] min-w-[20px] text-center">
+                                                {count}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div >
