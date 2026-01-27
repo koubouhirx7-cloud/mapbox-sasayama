@@ -144,57 +144,58 @@ function App() {
                             {sortedRoutes.filter(r => r.category === 'route').map((route, index) => {
                                 const dist = userLocation ? getDistance(userLocation.lat, userLocation.lng, route.startPoint[1], route.startPoint[0]) : null;
                                 const isClosest = userLocation && index === 0;
-                                <div key={route.id} className={`relative rounded-lg transition-all duration-200 overflow-hidden border ${activeRoute === route.id ? 'bg-white border-satoyama-forest shadow-md' : 'hover:bg-satoyama-leaf/10 border-transparent'}`}>
-                                    {isClosest && (
-                                        <div className="absolute top-0 left-0 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-br-lg z-20 font-bold shadow-sm">
-                                            一番近い
-                                        </div>
-                                    )}
-
-                                    <button
-                                        onClick={() => {
-                                            setActiveRoute(route.id);
-                                            setSelectionTimestamp(Date.now());
-                                            setIsSidebarOpen(false);
-                                        }}
-                                        className="w-full text-left p-3 pt-5 flex flex-col gap-1"
-                                    >
-                                        <div className="flex items-start gap-2">
-                                            <span className={`mt-1.5 w-2.5 h-2.5 rounded-full flex-shrink-0 ${activeRoute === route.id ? 'bg-satoyama-forest' : 'bg-satoyama-leaf'}`}></span>
-                                            <span className={`text-base font-bold leading-tight ${activeRoute === route.id ? 'text-satoyama-forest' : 'text-satoyama-mist'}`}>
-                                                {route.name}
-                                            </span>
-                                        </div>
-                                        {dist !== null && (
-                                            <div className="pl-5 text-xs text-gray-500 flex items-center gap-1">
-                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                                現在地から {formatDist(dist)}
+                                return (
+                                    <div key={route.id} className={`relative rounded-lg transition-all duration-200 overflow-hidden border ${activeRoute === route.id ? 'bg-white border-satoyama-forest shadow-md' : 'hover:bg-satoyama-leaf/10 border-transparent'}`}>
+                                        {isClosest && (
+                                            <div className="absolute top-0 left-0 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-br-lg z-20 font-bold shadow-sm">
+                                                一番近い
                                             </div>
                                         )}
-                                    </button>
 
-                                    {/* Navigation Button (Bottom Block) */}
-                                    <div className="px-3 pb-3">
-                                        <a
-                                            href={`https://www.google.com/maps/dir/?api=1&destination=${route.startPoint[1]},${route.startPoint[0]}&travelmode=bicycling`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className={`w-full flex items-center justify-center gap-2 py-2 rounded text-xs font-bold transition-colors
-                                                    ${activeRoute === route.id
-                                                    ? 'bg-[#2D5A27] text-white hover:bg-[#1B3617]'
-                                                    : 'bg-white/40 text-satoyama-forest hover:bg-white/60 border border-satoyama-forest/20'}`}
-                                            onClick={(e) => e.stopPropagation()}
+                                        <button
+                                            onClick={() => {
+                                                setActiveRoute(route.id);
+                                                setSelectionTimestamp(Date.now());
+                                                setIsSidebarOpen(false);
+                                            }}
+                                            className="w-full text-left p-3 pt-5 flex flex-col gap-1"
                                         >
-                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                                            </svg>
-                                            スタート地点へナビ
-                                        </a>
+                                            <div className="flex items-start gap-2">
+                                                <span className={`mt-1.5 w-2.5 h-2.5 rounded-full flex-shrink-0 ${activeRoute === route.id ? 'bg-satoyama-forest' : 'bg-satoyama-leaf'}`}></span>
+                                                <span className={`text-base font-bold leading-tight ${activeRoute === route.id ? 'text-satoyama-forest' : 'text-satoyama-mist'}`}>
+                                                    {route.name}
+                                                </span>
+                                            </div>
+                                            {dist !== null && (
+                                                <div className="pl-5 text-xs text-gray-500 flex items-center gap-1">
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    現在地から {formatDist(dist)}
+                                                </div>
+                                            )}
+                                        </button>
+
+                                        {/* Navigation Button (Bottom Block) */}
+                                        <div className="px-3 pb-3">
+                                            <a
+                                                href={`https://www.google.com/maps/dir/?api=1&destination=${route.startPoint[1]},${route.startPoint[0]}&travelmode=bicycling`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={`w-full flex items-center justify-center gap-2 py-2 rounded text-xs font-bold transition-colors
+                                                    ${activeRoute === route.id
+                                                        ? 'bg-[#2D5A27] text-white hover:bg-[#1B3617]'
+                                                        : 'bg-white/40 text-satoyama-forest hover:bg-white/60 border border-satoyama-forest/20'}`}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                                </svg>
+                                                スタート地点へナビ
+                                            </a>
+                                        </div>
                                     </div>
-                                </div>
                                 );
                             })}
                         </div>
