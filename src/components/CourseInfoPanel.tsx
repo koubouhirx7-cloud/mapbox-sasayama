@@ -34,26 +34,44 @@ const CourseInfoPanel: React.FC<CourseInfoPanelProps> = ({ route, isNavigating =
                 </div>
 
                 <div className="flex flex-col items-end gap-2 shrink-0">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setIsExpanded(!isExpanded);
-                        }}
-                        className="bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full text-gray-500 transition-colors"
-                        aria-label={isExpanded ? "Collapse" : "Expand"}
-                    >
-                        {isExpanded ? (
-                            // Chevron Down
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                            </svg>
-                        ) : (
-                            // Chevron Up
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" />
-                            </svg>
+                    <div className="flex items-center gap-2">
+                        {/* Navigate to Start Button */}
+                        {route.startPoint && (
+                            <a
+                                href={`https://www.google.com/maps/dir/?api=1&destination=${route.startPoint[1]},${route.startPoint[0]}&travelmode=bicycling`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 rounded-full text-[10px] font-bold shadow-sm transition-colors"
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                </svg>
+                                <span>NAVI</span>
+                            </a>
                         )}
-                    </button>
+
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsExpanded(!isExpanded);
+                            }}
+                            className="bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full text-gray-500 transition-colors"
+                            aria-label={isExpanded ? "Collapse" : "Expand"}
+                        >
+                            {isExpanded ? (
+                                // Chevron Down
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            ) : (
+                                // Chevron Up
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
 
