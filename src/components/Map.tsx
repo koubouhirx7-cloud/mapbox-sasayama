@@ -7,6 +7,7 @@ import courseData from '../data/course.json';
 import { explorationRoutes } from '../data/explorationRoutes';
 import { getMatchedRoute } from '../utils/mapMatching';
 import { spots, Spot } from '../data/spots';
+import { fetchPOIs, POI } from '../services/OverpassService';
 
 const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
 
@@ -53,9 +54,13 @@ const Map: React.FC<MapProps> = ({
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     // markersRef removed
+    // markersRef removed
     const spotMarkersRef = useRef<mapboxgl.Marker[]>([]);
+    const poiMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+    const [pois, setPois] = useState<POI[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
 
     // Persisted States
     const [is3D, setIs3D] = useState(() => localStorage.getItem('map_is3D') === 'true');
@@ -682,6 +687,74 @@ const Map: React.FC<MapProps> = ({
     }, [mapInstance, isSpotsVisible]);
 
 
+    // Handle Overpass POI Search
+    const handleSearchArea = async () => {
+        if (!mapInstance) return;
+
+        setIsSearching(true);
+        const bounds = mapInstance.getBounds();
+        const searchBounds = {
+            south: bounds.getSouth(),
+            west: bounds.getWest(),
+            north: bounds.getNorth(),
+            east: bounds.getEast()
+        };
+
+        const newPois = await fetchPOIs(searchBounds);
+        setPois(newPois);
+        setIsSearching(false);
+    };
+
+    // Render POI Markers
+    useEffect(() => {
+        if (!mapInstance) return;
+
+        // Clear existing POI markers
+        poiMarkersRef.current.forEach(marker => marker.remove());
+        poiMarkersRef.current = [];
+
+        pois.forEach(poi => {
+            let color = '#555';
+            let icon = '📍';
+
+            switch (poi.type) {
+                case 'restaurant': color = '#FF5722'; icon = '🍽️'; break;
+                case 'cafe': color = '#795548'; icon = '☕'; break;
+                case 'toilet': color = '#03A9F4'; icon = '🚻'; break;
+                case 'tourism': color = '#E91E63'; icon = 'ℹ️'; break;
+                case 'convenience': color = '#FF9800'; icon = '🏪'; break;
+            }
+
+            // Create custom element for emoji marker
+            const el = document.createElement('div');
+            el.className = 'poi-marker';
+            el.innerHTML = `<div style="font-size: 20px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${icon}</div>`;
+
+            const popupContent = `
+                <div class="p-3 max-w-[200px] font-sans">
+                    <h3 class="text-sm font-bold text-gray-800 mb-1">${poi.name}</h3>
+                    <p class="text-xs text-gray-500 mb-1 capitalize">${poi.type}</p>
+                    <a href="https://www.google.com/maps/search/?api=1&query=${poi.lat},${poi.lon}" target="_blank" rel="noopener noreferrer" 
+                       class="inline-block w-full text-center bg-blue-600 text-white text-[10px] py-1.5 rounded shadow-sm hover:bg-blue-700 transition-colors mt-1">
+                        Googleマップで見る
+                    </a>
+                </div>
+            `;
+
+            const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '250px' })
+                .setHTML(popupContent);
+
+            const marker = new mapboxgl.Marker({ element: el })
+                .setLngLat([poi.lon, poi.lat])
+                .setPopup(popup)
+                .addTo(mapInstance);
+
+            poiMarkersRef.current.push(marker);
+        });
+
+    }, [pois, mapInstance]);
+
+
     if (error) return <div className="text-red-500 p-4">{error}</div>;
 
     return (
@@ -806,6 +879,29 @@ const Map: React.FC<MapProps> = ({
                     <path d="M8 3h8"></path>
                     <path d="M12 3a4 4 0 0 1 4 4"></path>
                 </svg>
+            </button>
+
+            {/* Overpass Search Button */}
+            <button
+                onClick={handleSearchArea}
+                disabled={isSearching}
+                className={`absolute top-4 left-4 z-10 px-4 py-2 rounded-full shadow-lg transition-all duration-300 flex items-center gap-2 font-bold text-sm
+                    ${isSearching ? 'bg-gray-100 text-gray-400 cursor-wait' : 'bg-white text-blue-600 hover:bg-blue-50 ring-1 ring-blue-200'}`}
+            >
+                {isSearching ? (
+                    <>
+                        <svg className="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        検索中...
+                    </>
+                ) : (
+                    <>
+                        <span className="text-lg">🔍</span>
+                        このエリアで探す
+                    </>
+                )}
             </button>
         </div >
     );

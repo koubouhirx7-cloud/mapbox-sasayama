@@ -138,14 +138,20 @@ function App() {
                     {/* Cycling Courses Section */}
                     <div className="mb-8">
                         <h2 className="text-xs uppercase tracking-widest text-satoyama-leaf font-bold mb-3 px-2 flex items-center gap-2">
-                            <span className="text-lg">🚲</span> サイクリングコース {userLocation && <span className="text-[10px] bg-red-500 text-white px-1 rounded ml-auto">近い順</span>}
+                            <span className="text-lg">🚲</span> サイクリングコース {userLocation && <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full ml-auto shadow-sm">現在地から近い順</span>}
                         </h2>
                         <div className="space-y-3">
-                            {sortedRoutes.filter(r => r.category === 'route').map((route) => {
+                            {sortedRoutes.filter(r => r.category === 'route').map((route, index) => {
                                 const dist = userLocation ? getDistance(userLocation.lat, userLocation.lng, route.startPoint[1], route.startPoint[0]) : null;
+                                const isClosest = userLocation && index === 0;
 
                                 return (
                                     <div key={route.id} className="relative group">
+                                        {isClosest && (
+                                            <div className="absolute -top-2 left-2 bg-red-600 text-white text-[10px] px-2 py-1 rounded-full shadow-md z-20 font-bold animate-bounce">
+                                                一番近い！
+                                            </div>
+                                        )}
                                         <button
                                             onClick={() => {
                                                 setActiveRoute(route.id);
@@ -172,18 +178,22 @@ function App() {
                                             )}
                                         </button>
 
-                                        {/* Google Maps Button in List */}
                                         <a
                                             href={`https://www.google.com/maps/dir/?api=1&destination=${route.startPoint[1]},${route.startPoint[0]}&travelmode=bicycling`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/10 hover:bg-white/30 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors z-10 flex items-center gap-1
+                                                ${activeRoute === route.id
+                                                    ? 'bg-[#2D5A27] text-white hover:bg-[#1B3617]' // Active: Dark Green Button on White Row
+                                                    : 'bg-white/20 text-white hover:bg-white/40'   // Inactive: White transparent on Dark Green Row
+                                                }`}
                                             title="Googleマップでここへ行く"
                                             onClick={(e) => e.stopPropagation()}
                                         >
-                                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                                                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                                             </svg>
+                                            <span className="text-[10px] font-bold">ナビ</span>
                                         </a>
                                     </div>
                                 );
