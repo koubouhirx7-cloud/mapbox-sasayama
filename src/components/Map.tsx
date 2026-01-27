@@ -473,21 +473,23 @@ const Map: React.FC<MapProps> = ({
                 };
 
                 // Add listeners
-                map.on('mousedown', startLongPress);
-                map.on('touchstart', startLongPress);
+                if (mapRef.current) {
+                    mapRef.current.on('mousedown', startLongPress);
+                    mapRef.current.on('touchstart', startLongPress);
 
-                map.on('mouseup', cancelLongPress);
-                map.on('touchend', cancelLongPress);
-                map.on('touchcancel', cancelLongPress);
+                    mapRef.current.on('mouseup', cancelLongPress);
+                    mapRef.current.on('touchend', cancelLongPress);
+                    mapRef.current.on('touchcancel', cancelLongPress);
 
-                map.on('mousemove', checkMove);
-                map.on('touchmove', checkMove);
+                    mapRef.current.on('mousemove', checkMove);
+                    mapRef.current.on('touchmove', checkMove);
+                }
 
                 // Re-register cleanup when map unmounts ?? (Usually map.remove handles listeners attached to map)
 
             } catch (e) {
                 console.error('Failed to initialize Mapbox:', e);
-                setError(`Failed to initialize map: ${e instanceof Error ? e.message : String(e)}`);
+                setError('Failed to initialize map.');
             }
         }
 
