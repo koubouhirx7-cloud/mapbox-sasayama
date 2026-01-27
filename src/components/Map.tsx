@@ -446,7 +446,7 @@ const Map: React.FC<MapProps> = ({
                                         </a>
                                     </div>
                                 `)
-                            .addTo(map);
+                            .addTo(mapRef.current!);
 
                         // Optional: Vibrate if supported
                         if (navigator.vibrate) navigator.vibrate(50);
