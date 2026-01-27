@@ -487,7 +487,7 @@ const Map: React.FC<MapProps> = ({
 
             } catch (e) {
                 console.error('Failed to initialize Mapbox:', e);
-                setError('Failed to initialize map.');
+                setError(`Failed to initialize map: ${e instanceof Error ? e.message : String(e)}`);
             }
         }
 
