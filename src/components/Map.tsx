@@ -61,6 +61,13 @@ const Map: React.FC<MapProps> = ({
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
     const [pois, setPois] = useState<POI[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [visibleCategories, setVisibleCategories] = useState<Record<string, boolean>>({
+        restaurant: true,
+        cafe: true,
+        toilet: true,
+        tourism: true,
+        convenience: true
+    });
 
     // Persisted States
     const [is3D, setIs3D] = useState(() => localStorage.getItem('map_is3D') === 'true');
@@ -702,6 +709,14 @@ const Map: React.FC<MapProps> = ({
 
         const newPois = await fetchPOIs(searchBounds);
         setPois(newPois);
+        // Reset visibility to all true on new search
+        setVisibleCategories({
+            restaurant: true,
+            cafe: true,
+            toilet: true,
+            tourism: true,
+            convenience: true
+        });
         setIsSearching(false);
     };
 
@@ -714,6 +729,9 @@ const Map: React.FC<MapProps> = ({
         poiMarkersRef.current = [];
 
         pois.forEach(poi => {
+            // Skip if category is hidden
+            if (!visibleCategories[poi.type]) return;
+
             let color = '#555';
             let icon = '📍';
 
@@ -752,7 +770,7 @@ const Map: React.FC<MapProps> = ({
             poiMarkersRef.current.push(marker);
         });
 
-    }, [pois, mapInstance]);
+    }, [pois, mapInstance, visibleCategories]);
 
 
     if (error) return <div className="text-red-500 p-4">{error}</div>;
@@ -903,6 +921,46 @@ const Map: React.FC<MapProps> = ({
                     </>
                 )}
             </button>
+
+            {/* POI Control Panel (Only visible when POIs are present) */}
+            {pois.length > 0 && (
+                <div className="absolute top-[60px] left-4 z-10 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-gray-200 w-48 animate-slide-down">
+                    <div className="flex justify-between items-center mb-2 border-b pb-2">
+                        <h3 className="text-xs font-bold text-gray-700">検索結果 ({pois.length})</h3>
+                        <button
+                            onClick={() => setPois([])}
+                            className="text-[10px] text-red-500 hover:text-red-700 font-bold px-2 py-1 bg-red-50 rounded hover:bg-red-100 transition-colors"
+                        >
+                            クリア
+                        </button>
+                    </div>
+                    <div className="space-y-1.5">
+                        {[
+                            { id: 'restaurant', icon: '🍽️', label: 'レストラン' },
+                            { id: 'cafe', icon: '☕', label: 'カフェ' },
+                            { id: 'toilet', icon: '🚻', label: 'トイレ' },
+                            { id: 'tourism', icon: 'ℹ️', label: '観光案内' },
+                            { id: 'convenience', icon: '🏪', label: 'コンビニ' },
+                        ].map(type => {
+                            const count = pois.filter(p => p.type === type.id).length;
+                            if (count === 0) return null;
+                            return (
+                                <label key={type.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={visibleCategories[type.id]}
+                                        onChange={(e) => setVisibleCategories(prev => ({ ...prev, [type.id]: e.target.checked }))}
+                                        className="rounded text-satoyama-forest focus:ring-satoyama-leaf w-3.5 h-3.5"
+                                    />
+                                    <span className="text-base">{type.icon}</span>
+                                    <span className="text-xs text-gray-600 flex-1">{type.label}</span>
+                                    <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 rounded-full">{count}</span>
+                                </label>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </div >
     );
 };
