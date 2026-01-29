@@ -444,9 +444,9 @@ const Map: React.FC<MapProps> = ({
                             .setHTML(`
                                     <div class="p-2 text-center font-sans">
                                         <p class="text-sm font-bold text-gray-800 mb-2">ここへ行く？</p>
-                                        <a href="https://www.google.com/maps/dir/?api=1&destination=${lngLat.lat},${lngLat.lng}&travelmode=bicycling" 
-                                           target="_blank" 
-                                           rel="noopener noreferrer" 
+                                        <a href="https://www.google.com/maps/dir/?api=1&destination=${lngLat.lat},${lngLat.lng}&travelmode=bicycling"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
                                            class="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition-colors">
                                             Googleマップでナビ
                                         </a>
@@ -897,15 +897,15 @@ const Map: React.FC<MapProps> = ({
                             const center = mapRef.current?.getCenter();
                             const currentRoute = explorationRoutes.find(r => r.id === activeRoute);
 
-                            let context = '';
+                            let context = `利用者が現在見ている場所: 兵庫県丹波篠山市周辺。 `;
                             if (center) {
-                                context += `利用者の現在地（地図中心）: 北緯 ${center.lat.toFixed(4)}度, 東経 ${center.lng.toFixed(4)}度。この座標から「数分以内」で行ける、できる限り近くの場所を案内してください。 `;
+                                context += `地図中心座標: 北緯 ${center.lat.toFixed(4)}度, 東経 ${center.lng.toFixed(4)}度。座標の至近距離（1km以内）から、実在するスポットを案内してください。 `;
                             }
                             if (currentRoute && currentRoute.id !== 'none') {
-                                context += `現在選択中のコース/エリア: 「${currentRoute.name}」。説明: ${currentRoute.description}。このエリア内、もしくはこのコース周辺を優先してください。 `;
+                                context += `現在のコース: 「${currentRoute.name}」。説明: ${currentRoute.description}。 `;
                             }
 
-                            const response = await fetchGeminiResponse(context + "\n\n【重要：広範囲ではなく、今いる場所のすぐ近くを案内してください】\n質問: " + aiPrompt);
+                            const response = await fetchGeminiResponse(context + "\n\n【警告：丹波篠山市以外の場所を案内しないでください。不正確な情報は厳禁です】\n質問: " + aiPrompt);
                             setAiResponse(response);
                             setIsAiLoading(false);
                             setAiPrompt('');
