@@ -1,20 +1,21 @@
 const API_KEY = import.meta.env.VITE_GOOGLE_GENAI_API_KEY;
-// Using gemini-flash-latest as gemini-1.5-flash sometimes 404s depending on the project/region
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
+// Using v1 (GA) endpoint for better stability
+const API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
 
 export const fetchGeminiResponse = async (prompt: string): Promise<string> => {
     if (!API_KEY) {
         console.error('Gemini API Error: VITE_GOOGLE_GENAI_API_KEY is missing.');
-        return 'エラー：AIのAPIキーが見つかりません。Vercelの環境変数設定と再デプロイを確認してください。';
+        return 'エラー：AIのAPIキーが見つかりません。Vercel設定を確認し再デプロイしてください。';
     }
 
-    console.log('Gemini Request: using gemini-flash-latest (v1beta)...');
+    console.log('Gemini Request: sending to gemini-1.5-flash (v1)...');
 
     try {
-        const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+        const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'x-goog-api-key': API_KEY // Use header for security/stability
             },
             body: JSON.stringify({
                 system_instruction: {
@@ -42,11 +43,14 @@ export const fetchGeminiResponse = async (prompt: string): Promise<string> => {
             console.error('Gemini API Details:', JSON.stringify(errorData, null, 2));
 
             if (response.status === 429) {
-                return '【AI混雑中】現在、無料枠のリクエスト制限（1分間に15回まで）に達しました。数分待ってから再度お試しください。';
+                // 待機時間を抽出（例: retry in 37s）
+                const waitMatch = errorData.error?.message?.match(/retry in ([\d.]+)s/);
+                const seconds = waitMatch ? Math.ceil(parseFloat(waitMatch[1])) : '60';
+                return `【AI混雑中】一度に送れる回数制限に達しました。あと ${seconds} 秒ほど待ってから、もう一度「送信」してください。`;
             }
 
             if (response.status === 403) {
-                return '【認証エラー】APIキーが無効、または制限されている可能性があります。Google AI Studioの設定を確認してください。';
+                return '【認証エラー】APIキーが無効です。AI Studioで新しいキーを作成し、Vercelの環境変数を更新して再デプロイしてください。';
             }
 
             return `エラーが発生しました (${response.status}: ${errorData.error?.message || 'Unknown'})`;
@@ -55,9 +59,9 @@ export const fetchGeminiResponse = async (prompt: string): Promise<string> => {
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        return text || 'Sorry, I could not generate a response.';
+        return text || '回答を生成できませんでした。';
     } catch (error) {
         console.error('Gemini Network Error:', error);
-        return 'Error: Could not connect to the AI service.';
+        return 'エラー：AIサービスに接続できませんでした。';
     }
 };
