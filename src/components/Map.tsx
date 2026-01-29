@@ -876,11 +876,19 @@ const Map: React.FC<MapProps> = ({
                             if (!aiPrompt.trim()) return;
 
                             setIsAiLoading(true);
-                            // Include current map center context?
+                            // Include current map center and active route context
                             const center = mapRef.current?.getCenter();
-                            const context = center ? `Current Map Center: ${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}. ` : '';
+                            const currentRoute = explorationRoutes.find(r => r.id === activeRoute);
 
-                            const response = await fetchGeminiResponse(context + aiPrompt);
+                            let context = '';
+                            if (center) {
+                                context += `利用者の現在地（地図中心）: 北緯 ${center.lat.toFixed(4)}度, 東経 ${center.lng.toFixed(4)}度。 `;
+                            }
+                            if (currentRoute && currentRoute.id !== 'none') {
+                                context += `現在選択中のコース/エリア: 「${currentRoute.name}」。説明: ${currentRoute.description} `;
+                            }
+
+                            const response = await fetchGeminiResponse(context + "\n\n質問: " + aiPrompt);
                             setAiResponse(response);
                             setIsAiLoading(false);
                             setAiPrompt('');
