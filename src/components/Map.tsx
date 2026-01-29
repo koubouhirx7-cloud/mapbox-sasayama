@@ -837,8 +837,8 @@ const Map: React.FC<MapProps> = ({
             {isAiPanelOpen && (
                 <div className="absolute top-28 right-14 z-20 bg-white p-4 rounded-xl shadow-2xl w-72 md:w-80 border border-purple-100 animate-fade-in origin-top-right">
                     <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                            <span className="text-xl">✨</span> Gemini AIガイド
+                        <h3 className="font-bold text-gray-800 flex items-center gap-2 font-outfit">
+                            <span className="text-xl">✨</span> SATOYAMA AI
                         </h3>
                         <button onClick={() => setIsAiPanelOpen(false)} className="text-gray-400 hover:text-gray-600">
                             ✕
