@@ -900,7 +900,7 @@ const Map: React.FC<MapProps> = ({
                             value={aiPrompt}
                             onChange={(e) => setAiPrompt(e.target.value)}
                             placeholder="AIに質問する..."
-                            className="w-full pl-4 pr-10 py-2 rounded-full border border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-sm"
+                            className="w-full pl-4 pr-10 py-3 rounded-full border border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-base"
                         />
                         <button
                             type="submit"
