@@ -7,6 +7,7 @@ import GpxRouteLayer from './GpxRouteLayer';
 import courseData from '../data/course.json';
 import { explorationRoutes } from '../data/explorationRoutes';
 import { fetchPOIs, POI } from '../services/OverpassService';
+import { fetchGeminiResponse } from '../services/GeminiService';
 
 const HIGHLANDER_COORDS: [number, number] = [135.164515, 35.062031];
 
@@ -57,6 +58,10 @@ const Map: React.FC<MapProps> = ({
     const poiMarkersRef = useRef<mapboxgl.Marker[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+    const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [aiResponse, setAiResponse] = useState('');
+    const [isAiLoading, setIsAiLoading] = useState(false);
     const [pois, setPois] = useState<POI[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [isPanelOpen, setIsPanelOpen] = useState(true);
@@ -822,6 +827,94 @@ const Map: React.FC<MapProps> = ({
                     onRouteLoaded={onRouteLoaded}
                     routeData={targetRoute.data}
                 />
+            )}
+
+            {/* AI Guide Button */}
+            <button
+                onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+                className={`absolute top-28 right-3 z-10 p-3 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-xs
+                    ${isAiPanelOpen
+                        ? 'bg-purple-600 text-white ring-2 ring-purple-300'
+                        : 'bg-white text-purple-600 hover:bg-purple-50'}`}
+                style={{ width: '40px', height: '40px' }}
+                aria-label="Ask AI"
+            >
+                ✨
+            </button>
+
+            {/* AI Panel */}
+            {isAiPanelOpen && (
+                <div className="absolute top-28 right-14 z-20 bg-white p-4 rounded-xl shadow-2xl w-72 md:w-80 border border-purple-100 animate-fade-in origin-top-right">
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                            <span className="text-xl">✨</span> Gemini AIガイド
+                        </h3>
+                        <button onClick={() => setIsAiPanelOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            ✕
+                        </button>
+                    </div>
+
+                    <div className="mb-4 max-h-60 overflow-y-auto bg-gray-50 rounded-lg p-3 text-sm leading-relaxed text-gray-700 min-h-[100px]">
+                        {isAiLoading ? (
+                            <div className="flex items-center gap-2 text-purple-600 justify-center h-full">
+                                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                考えています...
+                            </div>
+                        ) : (
+                            aiResponse ? (
+                                <div className="prose prose-sm prose-purple">
+                                    {aiResponse.split('\n').map((line, i) => (
+                                        <p key={i} className="mb-1 last:mb-0">{line}</p>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-gray-400 text-center py-4">
+                                    場所や歴史について何でも聞いてください。<br />
+                                    例: 「丹波篠山の歴史は？」「近くのおすすめランチは？」
+                                </p>
+                            )
+                        )}
+                    </div>
+
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            if (!aiPrompt.trim()) return;
+
+                            setIsAiLoading(true);
+                            // Include current map center context?
+                            const center = mapRef.current?.getCenter();
+                            const context = center ? `Current Map Center: ${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}. ` : '';
+
+                            const response = await fetchGeminiResponse(context + aiPrompt);
+                            setAiResponse(response);
+                            setIsAiLoading(false);
+                            setAiPrompt('');
+                        }}
+                        className="relative"
+                    >
+                        <input
+                            type="text"
+                            value={aiPrompt}
+                            onChange={(e) => setAiPrompt(e.target.value)}
+                            placeholder="AIに質問する..."
+                            className="w-full pl-4 pr-10 py-2 rounded-full border border-gray-300 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-sm"
+                        />
+                        <button
+                            type="submit"
+                            disabled={isAiLoading || !aiPrompt.trim()}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-purple-600 text-white rounded-full hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
             )}
 
             {/* Historical Toggle Button */}
