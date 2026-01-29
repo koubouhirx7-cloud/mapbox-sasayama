@@ -219,6 +219,7 @@ const Map: React.FC<MapProps> = ({
                             type: 'raster',
                             tiles: ['https://cyberjapandata.gsi.go.jp/xyz/gazo1/{z}/{x}/{y}.jpg'],
                             tileSize: 256,
+                            maxzoom: 17, // Prevents 404 at high zoom
                             attribution: '国土地理院 (1974-1978)'
                         });
                     }
