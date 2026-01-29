@@ -899,13 +899,13 @@ const Map: React.FC<MapProps> = ({
 
                             let context = '';
                             if (center) {
-                                context += `利用者の現在地（地図中心）: 北緯 ${center.lat.toFixed(4)}度, 東経 ${center.lng.toFixed(4)}度。 `;
+                                context += `利用者の現在地（地図中心）: 北緯 ${center.lat.toFixed(4)}度, 東経 ${center.lng.toFixed(4)}度。この座標から「数分以内」で行ける、できる限り近くの場所を案内してください。 `;
                             }
                             if (currentRoute && currentRoute.id !== 'none') {
-                                context += `現在選択中のコース/エリア: 「${currentRoute.name}」。説明: ${currentRoute.description} `;
+                                context += `現在選択中のコース/エリア: 「${currentRoute.name}」。説明: ${currentRoute.description}。このエリア内、もしくはこのコース周辺を優先してください。 `;
                             }
 
-                            const response = await fetchGeminiResponse(context + "\n\n質問: " + aiPrompt);
+                            const response = await fetchGeminiResponse(context + "\n\n【重要：広範囲ではなく、今いる場所のすぐ近くを案内してください】\n質問: " + aiPrompt);
                             setAiResponse(response);
                             setIsAiLoading(false);
                             setAiPrompt('');
