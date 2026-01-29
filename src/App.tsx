@@ -98,6 +98,13 @@ function App() {
                 .animate-slide-down {
                     animation: slide-down 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
                 }
+                @keyframes pulse-slow {
+                    0%, 100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+                    50% { transform: translate(-50%, 0) scale(1.05); opacity: 0.9; }
+                }
+                .animate-pulse-slow {
+                    animation: pulse-slow 3s ease-in-out infinite;
+                }
                 `}
             </style>
 

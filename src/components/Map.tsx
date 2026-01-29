@@ -1011,8 +1011,8 @@ const Map: React.FC<MapProps> = ({
             {/* AI Guide Trigger (Replaces Search Button) */}
             <button
                 onClick={() => setIsAiPanelOpen(true)}
-                className={`absolute top-4 left-1/2 -translate-x-1/2 z-10 px-6 py-3 rounded-full shadow-xl transition-all duration-300 flex items-center gap-2 font-bold text-sm
-                    bg-white text-purple-600 hover:bg-purple-50 ring-1 ring-purple-200 hover:ring-purple-300`}
+                className={`absolute top-4 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full shadow-2xl transition-all duration-300 flex items-center gap-2 font-bold text-sm
+                    bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:scale-105 active:scale-95 ring-2 ring-white/50 animate-pulse-slow`}
             >
                 <span className="text-xl">✨</span>
                 AIに聞く
