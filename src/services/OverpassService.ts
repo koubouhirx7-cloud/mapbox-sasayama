@@ -3,7 +3,7 @@ export interface POI {
     lat: number;
     lon: number;
     name: string;
-    type: 'restaurant' | 'cafe' | 'toilet' | 'tourism' | 'convenience';
+    type: 'restaurant' | 'cafe' | 'toilet' | 'tourism' | 'convenience' | 'historic' | 'parking';
     tags: any;
 }
 
@@ -14,12 +14,17 @@ export async function fetchPOIs(bounds: { south: number, west: number, north: nu
           node["amenity"="restaurant"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
           node["amenity"="cafe"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
           node["amenity"="toilets"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
-          node["tourism"="information"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
+          node["tourism"~"information|attraction|viewpoint"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
+          node["historic"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
+          node["amenity"="place_of_worship"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
           node["shop"="convenience"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
+          node["amenity"~"parking|bicycle_parking"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
+          
+          way["historic"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
+          way["tourism"~"attraction"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
+          way["amenity"="place_of_worship"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});
         );
-        out body;
-        >;
-        out skel qt;
+        out center;
     `;
 
     const url = 'https://overpass-api.de/api/interpreter';
@@ -38,36 +43,44 @@ export async function fetchPOIs(bounds: { south: number, west: number, north: nu
         const pois: POI[] = [];
 
         data.elements.forEach((element: any) => {
-            if (element.type === 'node' && element.tags) {
-                let type: POI['type'] = 'restaurant';
-                if (element.tags.amenity === 'cafe') type = 'cafe';
-                else if (element.tags.amenity === 'toilets') type = 'toilet';
-                else if (element.tags.tourism === 'information') type = 'tourism';
-                else if (element.tags.shop === 'convenience') type = 'convenience';
+            const tags = element.tags;
+            if (!tags) return;
 
-                // Skip unnamed toilets/convenience stores if prefered, but usually we want them all
-                // For restaurants, names are better but we can show unnamed ones too
+            let type: POI['type'] = 'tourism';
 
-                // Name resolution
-                let name = element.tags.name || element.tags['name:ja'] || element.tags['name:en'];
+            if (tags.amenity === 'restaurant') type = 'restaurant';
+            else if (tags.amenity === 'cafe') type = 'cafe';
+            else if (tags.amenity === 'toilets') type = 'toilet';
+            else if (tags.shop === 'convenience') type = 'convenience';
+            else if (tags.historic || tags.amenity === 'place_of_worship') type = 'historic';
+            else if (tags.amenity === 'parking' || tags.amenity === 'bicycle_parking') type = 'parking';
+            else if (tags.tourism) type = 'tourism';
 
-                // Special handling for toilets: if unnamed, call it "Public Toilet"
-                if (!name && type === 'toilet') {
-                    name = '公衆トイレ';
+            // Name resolution
+            let name = tags.name || tags['name:ja'] || tags['name:en'];
+
+            // Fallback names for certain types
+            if (!name) {
+                if (type === 'toilet') name = '公衆トイレ';
+                else if (type === 'parking') name = '駐車場';
+                else if (type === 'historic' && tags.amenity === 'place_of_worship') {
+                    if (tags.religion === 'shinto') name = '神社';
+                    else if (tags.religion === 'buddhist') name = '寺院';
+                    else name = '礼拝所';
                 }
-
-                // If still no name, skip it (User requested removal of "Name Unregistered" items)
-                if (!name) return;
-
-                pois.push({
-                    id: element.id,
-                    lat: element.lat,
-                    lon: element.lon,
-                    name: name,
-                    type: type,
-                    tags: element.tags
-                });
             }
+
+            // Skip unnamed items except those with fallbacks
+            if (!name) return;
+
+            pois.push({
+                id: element.id,
+                lat: element.type === 'node' ? element.lat : element.center.lat,
+                lon: element.type === 'node' ? element.lon : element.center.lon,
+                name: name,
+                type: type,
+                tags: tags
+            });
         });
 
         return pois;

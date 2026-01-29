@@ -70,7 +70,9 @@ const Map: React.FC<MapProps> = ({
         cafe: true,
         toilet: true,
         tourism: true,
-        convenience: true
+        convenience: true,
+        historic: true,
+        parking: true
     });
 
     // Persisted States
@@ -748,13 +750,15 @@ const Map: React.FC<MapProps> = ({
 
         const newPois = await fetchPOIs(searchBounds);
         setPois(newPois);
-        // Reset visibility to all true on new search
+        // Reset visibility to all true on new search including new categories
         setVisibleCategories({
             restaurant: true,
             cafe: true,
             toilet: true,
             tourism: true,
-            convenience: true
+            convenience: true,
+            historic: true,
+            parking: true
         });
         setIsSearching(false);
     };
@@ -780,6 +784,8 @@ const Map: React.FC<MapProps> = ({
                 case 'toilet': color = '#03A9F4'; icon = '🚻'; break;
                 case 'tourism': color = '#E91E63'; icon = 'ℹ️'; break;
                 case 'convenience': color = '#FF9800'; icon = '🏪'; break;
+                case 'historic': color = '#795548'; icon = '🏯'; break;
+                case 'parking': color = '#607D8B'; icon = '🅿️'; break;
             }
 
             // Create custom element for emoji marker
@@ -922,13 +928,19 @@ const Map: React.FC<MapProps> = ({
                                     context += `現在選択中のコースは「${currentRoute.name}」です。 `;
                                 }
 
-                                if (localPois.length > 0) {
-                                    context += `\n以下のリストは、周辺スポットです：\n`;
-                                    localPois.slice(0, 15).forEach(poi => {
-                                        context += `- ${poi.name}（${poi.type}）\n`;
+                                if (localPois.length > 0 && center) {
+                                    context += `\n以下のリストは、周辺スポットです。距離が近い順に並んでいます：\n`;
+
+                                    // Sort by distance from center
+                                    const sortedPois = [...localPois].map(poi => {
+                                        const dist = Math.sqrt(Math.pow(poi.lat - center.lat, 2) + Math.pow(poi.lon - center.lng, 2)) * 111.32; // Approx km
+                                        return { ...poi, distance: dist };
+                                    }).sort((a, b) => a.distance - b.distance);
+
+                                    sortedPois.slice(0, 20).forEach(poi => {
+                                        context += `- ${poi.name}（${poi.type}、約${poi.distance.toFixed(1)}km）\n`;
                                     });
                                 }
-
                                 console.log('Sending request to Gemini...');
                                 const response = await fetchGeminiResponse(context + "\n\n質問: " + aiPrompt);
                                 setAiResponse(response);
@@ -1093,41 +1105,35 @@ const Map: React.FC<MapProps> = ({
                         </div>
 
                         {isPanelOpen && (
-                            <div className="space-y-2 animate-fade-in">
+                            <div className="space-y-2 animate-fade-in max-h-60 overflow-y-auto pr-1">
                                 <div className="grid grid-cols-1 gap-1.5">
-                                    {Object.keys(visibleCategories).map(cat => {
-                                        // Count items in this category
-                                        const count = pois.filter(p => p.type === cat).length;
+                                    {Object.entries({
+                                        restaurant: { label: '飲食', icon: '🍴' },
+                                        cafe: { label: 'カフェ', icon: '☕' },
+                                        historic: { label: '歴史・名刹', icon: '🏯' },
+                                        tourism: { label: '観光・案内', icon: 'ℹ️' },
+                                        convenience: { label: 'コンビニ', icon: '🏪' },
+                                        toilet: { label: 'トイレ', icon: '🚻' },
+                                        parking: { label: '駐車場', icon: '🅿️' }
+                                    }).map(([id, info]) => {
+                                        const count = pois.filter(p => p.type === id).length;
                                         if (count === 0) return null;
 
-                                        let label = cat;
-                                        let icon = '📍';
-                                        switch (cat) {
-                                            case 'restaurant': label = 'レストラン'; icon = '🍽️'; break;
-                                            case 'cafe': label = 'カフェ'; icon = '☕'; break;
-                                            case 'toilet': label = 'トイレ'; icon = '🚻'; break;
-                                            case 'tourism': label = '観光案内'; icon = 'ℹ️'; break;
-                                            case 'convenience': label = 'コンビニ'; icon = '🏪'; break;
-                                        }
-
                                         return (
-                                            <label key={cat} className="flex items-center justify-between text-xs cursor-pointer hover:bg-gray-50 p-1 rounded select-none">
+                                            <label key={id} className="flex items-center justify-between text-[11px] cursor-pointer hover:bg-gray-50 p-1.5 rounded select-none transition-colors">
                                                 <div className="flex items-center gap-2">
                                                     <input
                                                         type="checkbox"
-                                                        checked={visibleCategories[cat]}
-                                                        onChange={() => {
-                                                            const newState = { ...visibleCategories, [cat]: !visibleCategories[cat] };
-                                                            setVisibleCategories(newState);
-                                                        }}
-                                                        className="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                                                        checked={visibleCategories[id]}
+                                                        onChange={() => setVisibleCategories(prev => ({ ...prev, [id]: !prev[id] }))}
+                                                        className="rounded text-purple-600 focus:ring-purple-500 w-3.5 h-3.5"
                                                     />
-                                                    <span className="flex items-center gap-1.5 text-gray-700">
-                                                        <span className="text-sm">{icon}</span>
-                                                        <span>{label}</span>
+                                                    <span className="flex items-center gap-1.5 text-gray-700 font-medium">
+                                                        <span>{info.icon}</span>
+                                                        <span>{info.label}</span>
                                                     </span>
                                                 </div>
-                                                <span className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full text-[10px] min-w-[20px] text-center">
+                                                <span className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full text-[9px] min-w-[18px] text-center font-bold">
                                                     {count}
                                                 </span>
                                             </label>
@@ -1139,7 +1145,7 @@ const Map: React.FC<MapProps> = ({
                     </div>
                 )
             }
-        </div >
+        </div>
     );
 };
 
