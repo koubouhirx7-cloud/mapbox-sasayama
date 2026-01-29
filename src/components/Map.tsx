@@ -330,15 +330,16 @@ const Map: React.FC<MapProps> = ({
 
                     geolocate.on('error', (e: any) => {
                         console.error('Geolocate error:', e);
-                        /* Suppressed user alerts for smoother experience
-                        if (e.code === 1) {
-                            alert('位置情報の利用が許可されていません。端末の設定で位置情報をオンにしてください。');
-                        } else if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                            alert('セキュリティ制約のため、位置情報はHTTPS接続（またはlocalhost）でのみ利用可能です。');
+                        // User-friendly error alerts
+                        if (e.code === 1) { // PERMISSION_DENIED
+                            alert('位置情報の利用が許可されていません。\n端末の設定：\n設定 > プライバシー > 位置情報サービス でオンにしてください。\nまた、ブラウザの設定も確認してください。');
+                        } else if (e.code === 2) { // POSITION_UNAVAILABLE
+                            alert('現在地を取得できませんでした。\n電波の良い場所で再度お試しください。');
+                        } else if (e.code === 3) { // TIMEOUT
+                            alert('位置情報の取得がタイムアウトしました。');
                         } else {
-                            alert('現在地を取得できませんでした。電波の良い場所で再度お試しください。');
+                            alert(`位置情報エラー: ${e.message}`);
                         }
-                        */
                     });
 
                     // Auto-start Geolocation for all users
