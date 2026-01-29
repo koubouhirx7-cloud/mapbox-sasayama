@@ -856,32 +856,26 @@ const Map: React.FC<MapProps> = ({
                             </div>
                         ) : (
                             aiResponse ? (
-                                <div className="prose prose-sm prose-purple">
-                                    {aiResponse.split('\n').map((line, lineIndex) => {
-                                        // Simple regex to find [text](url) patterns
-                                        const parts = line.split(/(\[.*?\]\(.*?\))/g);
-                                        return (
-                                            <p key={lineIndex} className="mb-1 last:mb-0">
-                                                {parts.map((part, partIndex) => {
-                                                    const match = part.match(/\[(.*?)\]\((.*?)\)/);
-                                                    if (match) {
-                                                        return (
-                                                            <a
-                                                                key={partIndex}
-                                                                href={match[2]}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="text-white bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-md text-xs inline-flex items-center gap-1 font-medium transition-colors my-1 no-underline"
-                                                            >
-                                                                {match[1]}
-                                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                                                            </a>
-                                                        );
-                                                    }
-                                                    return part;
-                                                })}
-                                            </p>
-                                        );
+                                <div className="prose prose-sm prose-purple whitespace-pre-wrap">
+                                    {aiResponse.split(/(\[.*?\]\s*\(.*?\))/gs).map((part, index) => {
+                                        const match = part.match(/\[(.*?)\]\s*\((.*?)\)/s);
+                                        if (match) {
+                                            const url = match[2].replace(/\s+/g, '');
+                                            return (
+                                                <a
+                                                    key={index}
+                                                    href={url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-block text-white bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-md text-xs font-bold transition-all transform active:scale-95 shadow-sm my-1 no-underline"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {match[1].trim()}
+                                                    <svg className="inline-block ml-1" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                                </a>
+                                            );
+                                        }
+                                        return part;
                                     })}
                                 </div>
                             ) : (
