@@ -1,6 +1,6 @@
 const API_KEY = import.meta.env.VITE_GOOGLE_GENAI_API_KEY;
-// Using Gemini 1.5 Flash Latest (Standard Free Tier Compatibility)
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+// Using Gemini Flash Latest (Exact name confirmed in account list)
+const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
 export const fetchGeminiResponse = async (prompt: string): Promise<string> => {
     if (!API_KEY) {
