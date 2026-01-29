@@ -897,15 +897,42 @@ const Map: React.FC<MapProps> = ({
                             const center = mapRef.current?.getCenter();
                             const currentRoute = explorationRoutes.find(r => r.id === activeRoute);
 
-                            let context = `利用者が現在見ている場所: 兵庫県丹波篠山市周辺。 `;
+                            // 1. Fetch real-time POIs near the center to ground the AI's knowledge
+                            let localPois: POI[] = [];
                             if (center) {
-                                context += `地図中心座標: 北緯 ${center.lat.toFixed(4)}度, 東経 ${center.lng.toFixed(4)}度。座標の至近距離（1km以内）から、実在するスポットを案内してください。 `;
-                            }
-                            if (currentRoute && currentRoute.id !== 'none') {
-                                context += `現在のコース: 「${currentRoute.name}」。説明: ${currentRoute.description}。 `;
+                                // Define a small bounding box (~2km radius)
+                                const lat = center.lat;
+                                const lng = center.lng;
+                                const delta = 0.015; // Approx 1.5 - 2km
+                                const searchBounds = {
+                                    south: lat - delta,
+                                    west: lng - delta,
+                                    north: lat + delta,
+                                    east: lng + delta
+                                };
+                                localPois = await fetchPOIs(searchBounds);
                             }
 
-                            const response = await fetchGeminiResponse(context + "\n\n【警告：丹波篠山市以外の場所を案内しないでください。不正確な情報は厳禁です】\n質問: " + aiPrompt);
+                            let context = `利用者は現在、兵庫県丹波篠山市の周辺にいます。 `;
+                            if (center) {
+                                context += `地図の中心座標は 北緯 ${center.lat.toFixed(4)}度, 東経 ${center.lng.toFixed(4)}度 です。 `;
+                            }
+                            if (currentRoute && currentRoute.id !== 'none') {
+                                context += `現在選択中のコースは「${currentRoute.name}」です。 `;
+                            }
+
+                            // Add the list of real POIs found via Overpass to the context
+                            if (localPois.length > 0) {
+                                context += `\n以下のリストは、現在地の周辺に実在することが確認されているスポットです：\n`;
+                                localPois.slice(0, 15).forEach(poi => {
+                                    context += `- ${poi.name}（種類: ${poi.type}）\n`;
+                                });
+                                context += `\n【禁止】このリストにない架空の店舗名や施設名を捏造しないでください。このリストにある場所を優先して案内してください。 `;
+                            } else {
+                                context += `\n現在地のすぐ近くに特定の店舗情報が見つかりませんでした。一般的なサイクリングの注意点を答えるか、丹波篠山市の有名な観光スポット（篠山城跡など）に限って案内してください。絶対に嘘の店名を教えないでください。 `;
+                            }
+
+                            const response = await fetchGeminiResponse(context + "\n\n【警告：不正確な店舗情報は厳格に禁止されています。日本語で正確に答えてください】\n質問: " + aiPrompt);
                             setAiResponse(response);
                             setIsAiLoading(false);
                             setAiPrompt('');
