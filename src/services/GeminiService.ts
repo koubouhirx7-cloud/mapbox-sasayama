@@ -1,14 +1,14 @@
 const API_KEY = import.meta.env.VITE_GOOGLE_GENAI_API_KEY;
-// Using the stable 1.5 Flash model name
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+// Using gemini-flash-latest as gemini-1.5-flash sometimes 404s depending on the project/region
+const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
 export const fetchGeminiResponse = async (prompt: string): Promise<string> => {
     if (!API_KEY) {
-        console.error('Gemini API Error: VITE_GOOGLE_GENAI_API_KEY is missing in env variables.');
-        return 'エラー：AIのAPIキーが見つかりません。設定を確認してください。';
+        console.error('Gemini API Error: VITE_GOOGLE_GENAI_API_KEY is missing.');
+        return 'エラー：AIのAPIキーが見つかりません。Vercelの環境変数設定と再デプロイを確認してください。';
     }
 
-    console.log('Gemini Request: sending to 1.5-flash...');
+    console.log('Gemini Request: using gemini-flash-latest (v1beta)...');
 
     try {
         const response = await fetch(`${API_URL}?key=${API_KEY}`, {
