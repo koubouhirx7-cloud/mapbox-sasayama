@@ -892,50 +892,53 @@ const Map: React.FC<MapProps> = ({
                             e.preventDefault();
                             if (!aiPrompt.trim()) return;
 
+                            console.log('AI Request Triggered:', aiPrompt);
                             setIsAiLoading(true);
-                            // Include current map center and active route context
-                            const center = mapRef.current?.getCenter();
-                            const currentRoute = explorationRoutes.find(r => r.id === activeRoute);
 
-                            // 1. Fetch real-time POIs near the center to ground the AI's knowledge
-                            let localPois: POI[] = [];
-                            if (center) {
-                                // Define a small bounding box (~2km radius)
-                                const lat = center.lat;
-                                const lng = center.lng;
-                                const delta = 0.015; // Approx 1.5 - 2km
-                                const searchBounds = {
-                                    south: lat - delta,
-                                    west: lng - delta,
-                                    north: lat + delta,
-                                    east: lng + delta
-                                };
-                                localPois = await fetchPOIs(searchBounds);
-                            }
+                            try {
+                                const center = mapRef.current?.getCenter();
+                                const currentRoute = explorationRoutes.find(r => r.id === activeRoute);
 
-                            let context = `利用者は現在、兵庫県丹波篠山市の周辺にいます。 `;
-                            if (center) {
-                                context += `地図の中心座標は 北緯 ${center.lat.toFixed(4)}度, 東経 ${center.lng.toFixed(4)}度 です。 `;
-                            }
-                            if (currentRoute && currentRoute.id !== 'none') {
-                                context += `現在選択中のコースは「${currentRoute.name}」です。 `;
-                            }
+                                let localPois: POI[] = [];
+                                if (center) {
+                                    console.log('Fetching nearby POIs for AI grounding...');
+                                    const lat = center.lat;
+                                    const lng = center.lng;
+                                    const delta = 0.015;
+                                    const searchBounds = {
+                                        south: lat - delta,
+                                        west: lng - delta,
+                                        north: lat + delta,
+                                        east: lng + delta
+                                    };
+                                    localPois = await fetchPOIs(searchBounds);
+                                }
 
-                            // Add the list of real POIs found via Overpass to the context
-                            if (localPois.length > 0) {
-                                context += `\n以下のリストは、現在地の周辺に実在することが確認されているスポットです：\n`;
-                                localPois.slice(0, 15).forEach(poi => {
-                                    context += `- ${poi.name}（種類: ${poi.type}）\n`;
-                                });
-                                context += `\n【禁止】このリストにない架空の店舗名や施設名を捏造しないでください。このリストにある場所を優先して案内してください。 `;
-                            } else {
-                                context += `\n現在地のすぐ近くに特定の店舗情報が見つかりませんでした。一般的なサイクリングの注意点を答えるか、丹波篠山市の有名な観光スポット（篠山城跡など）に限って案内してください。絶対に嘘の店名を教えないでください。 `;
-                            }
+                                let context = `利用者は現在、兵庫県丹波篠山市の周辺にいます。 `;
+                                if (center) {
+                                    context += `地図の中心座標は 北緯 ${center.lat.toFixed(4)}度, 東経 ${center.lng.toFixed(4)}度 です。 `;
+                                }
+                                if (currentRoute && currentRoute.id !== 'none') {
+                                    context += `現在選択中のコースは「${currentRoute.name}」です。 `;
+                                }
 
-                            const response = await fetchGeminiResponse(context + "\n\n【警告：不正確な店舗情報は厳格に禁止されています。日本語で正確に答えてください】\n質問: " + aiPrompt);
-                            setAiResponse(response);
-                            setIsAiLoading(false);
-                            setAiPrompt('');
+                                if (localPois.length > 0) {
+                                    context += `\n以下のリストは、周辺スポットです：\n`;
+                                    localPois.slice(0, 15).forEach(poi => {
+                                        context += `- ${poi.name}（${poi.type}）\n`;
+                                    });
+                                }
+
+                                console.log('Sending request to Gemini...');
+                                const response = await fetchGeminiResponse(context + "\n\n質問: " + aiPrompt);
+                                setAiResponse(response);
+                                setAiPrompt('');
+                            } catch (err) {
+                                console.error('AI Flow Error:', err);
+                                setAiResponse('エラーが発生しました。しばらく待ってから再度お試しください。');
+                            } finally {
+                                setIsAiLoading(false);
+                            }
                         }}
                         className="relative"
                     >
@@ -958,7 +961,8 @@ const Map: React.FC<MapProps> = ({
                         </button>
                     </form>
                 </div>
-            )}
+            )
+            }
 
             {/* Historical Toggle Button */}
             <button
@@ -1063,76 +1067,78 @@ const Map: React.FC<MapProps> = ({
             </button>
 
             {/* POI Control Panel (Only visible when POIs are present) */}
-            {pois.length > 0 && (
-                <div className="absolute top-[60px] left-1/2 -translate-x-1/2 z-10 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-gray-200 w-48 animate-slide-down">
-                    <div className="flex justify-between items-center mb-2 border-b pb-2 cursor-pointer" onClick={() => setIsPanelOpen(!isPanelOpen)}>
-                        <h3 className="text-xs font-bold text-gray-700 select-none flex items-center gap-1">
-                            検索結果 ({pois.length})
-                            <span className={`transition-transform duration-200 ${isPanelOpen ? 'rotate-180' : ''}`}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </span>
-                        </h3>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setPois([]);
-                                poiMarkersRef.current.forEach(marker => marker.remove());
-                                poiMarkersRef.current = [];
-                            }}
-                            className="text-[10px] text-red-500 hover:bg-red-50 px-2 py-0.5 rounded border border-red-100 transition-colors"
-                        >
-                            クリア
-                        </button>
-                    </div>
-
-                    {isPanelOpen && (
-                        <div className="space-y-2 animate-fade-in">
-                            <div className="grid grid-cols-1 gap-1.5">
-                                {Object.keys(visibleCategories).map(cat => {
-                                    // Count items in this category
-                                    const count = pois.filter(p => p.type === cat).length;
-                                    if (count === 0) return null;
-
-                                    let label = cat;
-                                    let icon = '📍';
-                                    switch (cat) {
-                                        case 'restaurant': label = 'レストラン'; icon = '🍽️'; break;
-                                        case 'cafe': label = 'カフェ'; icon = '☕'; break;
-                                        case 'toilet': label = 'トイレ'; icon = '🚻'; break;
-                                        case 'tourism': label = '観光案内'; icon = 'ℹ️'; break;
-                                        case 'convenience': label = 'コンビニ'; icon = '🏪'; break;
-                                    }
-
-                                    return (
-                                        <label key={cat} className="flex items-center justify-between text-xs cursor-pointer hover:bg-gray-50 p-1 rounded select-none">
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={visibleCategories[cat]}
-                                                    onChange={() => {
-                                                        const newState = { ...visibleCategories, [cat]: !visibleCategories[cat] };
-                                                        setVisibleCategories(newState);
-                                                    }}
-                                                    className="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
-                                                />
-                                                <span className="flex items-center gap-1.5 text-gray-700">
-                                                    <span className="text-sm">{icon}</span>
-                                                    <span>{label}</span>
-                                                </span>
-                                            </div>
-                                            <span className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full text-[10px] min-w-[20px] text-center">
-                                                {count}
-                                            </span>
-                                        </label>
-                                    );
-                                })}
-                            </div>
+            {
+                pois.length > 0 && (
+                    <div className="absolute top-[60px] left-1/2 -translate-x-1/2 z-10 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-gray-200 w-48 animate-slide-down">
+                        <div className="flex justify-between items-center mb-2 border-b pb-2 cursor-pointer" onClick={() => setIsPanelOpen(!isPanelOpen)}>
+                            <h3 className="text-xs font-bold text-gray-700 select-none flex items-center gap-1">
+                                検索結果 ({pois.length})
+                                <span className={`transition-transform duration-200 ${isPanelOpen ? 'rotate-180' : ''}`}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </span>
+                            </h3>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPois([]);
+                                    poiMarkersRef.current.forEach(marker => marker.remove());
+                                    poiMarkersRef.current = [];
+                                }}
+                                className="text-[10px] text-red-500 hover:bg-red-50 px-2 py-0.5 rounded border border-red-100 transition-colors"
+                            >
+                                クリア
+                            </button>
                         </div>
-                    )}
-                </div>
-            )}
+
+                        {isPanelOpen && (
+                            <div className="space-y-2 animate-fade-in">
+                                <div className="grid grid-cols-1 gap-1.5">
+                                    {Object.keys(visibleCategories).map(cat => {
+                                        // Count items in this category
+                                        const count = pois.filter(p => p.type === cat).length;
+                                        if (count === 0) return null;
+
+                                        let label = cat;
+                                        let icon = '📍';
+                                        switch (cat) {
+                                            case 'restaurant': label = 'レストラン'; icon = '🍽️'; break;
+                                            case 'cafe': label = 'カフェ'; icon = '☕'; break;
+                                            case 'toilet': label = 'トイレ'; icon = '🚻'; break;
+                                            case 'tourism': label = '観光案内'; icon = 'ℹ️'; break;
+                                            case 'convenience': label = 'コンビニ'; icon = '🏪'; break;
+                                        }
+
+                                        return (
+                                            <label key={cat} className="flex items-center justify-between text-xs cursor-pointer hover:bg-gray-50 p-1 rounded select-none">
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={visibleCategories[cat]}
+                                                        onChange={() => {
+                                                            const newState = { ...visibleCategories, [cat]: !visibleCategories[cat] };
+                                                            setVisibleCategories(newState);
+                                                        }}
+                                                        className="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                                                    />
+                                                    <span className="flex items-center gap-1.5 text-gray-700">
+                                                        <span className="text-sm">{icon}</span>
+                                                        <span>{label}</span>
+                                                    </span>
+                                                </div>
+                                                <span className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full text-[10px] min-w-[20px] text-center">
+                                                    {count}
+                                                </span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )
+            }
         </div >
     );
 };
