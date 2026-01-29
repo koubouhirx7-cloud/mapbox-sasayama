@@ -1,11 +1,14 @@
 const API_KEY = import.meta.env.VITE_GOOGLE_GENAI_API_KEY;
-// Using Gemini Flash Latest (Exact name confirmed in account list)
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
+// Using the stable 1.5 Flash model name
+const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
 export const fetchGeminiResponse = async (prompt: string): Promise<string> => {
     if (!API_KEY) {
-        return 'Error: API Key is missing. Please check .env file.';
+        console.error('Gemini API Error: VITE_GOOGLE_GENAI_API_KEY is missing in env variables.');
+        return 'エラー：AIのAPIキーが見つかりません。設定を確認してください。';
     }
+
+    console.log('Gemini Request: sending to 1.5-flash...');
 
     try {
         const response = await fetch(`${API_URL}?key=${API_KEY}`, {
@@ -36,14 +39,17 @@ export const fetchGeminiResponse = async (prompt: string): Promise<string> => {
 
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('Gemini API Error:', errorData);
+            console.error('Gemini API Details:', JSON.stringify(errorData, null, 2));
 
-            // クォータ制限（回数制限）エラーのハンドリング
             if (response.status === 429) {
-                return '【AI混雑中】現在、AIへのリクエストが集中しています。無料枠の制限（1分間に15回まで）に達した可能性があります。数分待ってから再度お試しください。';
+                return '【AI混雑中】現在、無料枠のリクエスト制限（1分間に15回まで）に達しました。数分待ってから再度お試しください。';
             }
 
-            return `エラーが発生しました。しばらく経ってから再度お試しください。 (${errorData.error?.message || 'Connection Error'})`;
+            if (response.status === 403) {
+                return '【認証エラー】APIキーが無効、または制限されている可能性があります。Google AI Studioの設定を確認してください。';
+            }
+
+            return `エラーが発生しました (${response.status}: ${errorData.error?.message || 'Unknown'})`;
         }
 
         const data = await response.json();
